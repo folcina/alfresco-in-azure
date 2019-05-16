@@ -1,0 +1,208 @@
+---
+- name: Remote configuration credentials
+  copy:
+      dest: "{{ alfresco_root_dir }}/alfresco-jmxrmi.access"
+      mode: 0660
+      owner: "{{ alfresco_user }}"
+      group: "{{ alfresco_group }}"
+      content: |
+        monitorRole   readonly
+        controlRole   readwrite
+
+- name: Remote configuration credentials
+  copy:
+      dest: "{{ alfresco_root_dir }}/alfresco-jmxrmi.password"
+      mode: 0660
+      owner: "{{ alfresco_user }}"
+      group: "{{ alfresco_group }}"
+      content: |
+        monitorRole  "{{ monitor_role_pwd }}"
+        controlRole  "{{ control_role_pwd }}"
+
+## TOMCAT CONFIGURATION
+- name: Configure tomcat server.xml (tomcat_shutdown_port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+    regexp: "@@ansible_tomcat_shutdown_port@@"
+    replace: "{{ tomcat_shutdown_port }}"
+
+- name: Configure tomcat server.xml (tomcat_port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+    regexp: "@@ansible_tomcat_port@@"
+    replace: "{{ tomcat_port }}"
+
+- name: Configure tomcat server.xml (tomcat_ssl_port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+    regexp: "@@ansible_tomcat_ssl_port@@"
+    replace: "{{ tomcat_ssl_port }}"
+
+- name: Configure tomcat server.xml (tomcat_ajp_port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+    regexp: "@@ansible_tomcat_ajp_port@@"
+    replace: "{{ tomcat_ajp_port }}"
+
+- name: Configure alfresco-global.properties (tomcat_port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_tomcat_port@@"
+    replace: "{{ tomcat_port }}"
+
+## ALFRESCO CONFIGURATION
+- name: Configure alfresco-global.properties (alfresco_contentstores_dir)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_contentstores_dir@@"
+    replace: "{{ alfresco_contentstores_dir }}"
+
+- name: Configure alfresco-global.properties (alfresco_host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_host@@"
+    replace: "{{ alfresco_host }}"
+
+- name: Configure alfresco-global.properties (share_host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_share_host@@"
+    replace: "{{ share_host }}"
+
+- name: Configure alfresco-global.properties (alfresco_db_user)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_db_user@@"
+    replace: "{{ alfresco_db_user }}"
+
+- name: Configure alfresco-global.properties (alfresco_db_pass)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_db_pass@@"
+    replace: "{{ alfresco_db_pass }}"
+
+- name: Configure alfresco-global.properties (alfresco_db_name)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_db_name@@"
+    replace: "{{ alfresco_db_name }}"
+
+- name: Configure alfresco-global.properties (alfresco_db_host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_db_host@@"
+    replace: "{{ alfresco_db_host }}"
+
+- name: Configure alfresco-global.properties (alfresco_admin_password_hash)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_admin_password_hash@@"
+    replace: "{{ alfresco_admin_password_hash }}"
+
+- name: Configure alfresco-global.properties (solr_host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_solr_host@@"
+    replace: "{{ solr_host }}"
+
+- name: Configure alfresco-global.properties (solr_port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_solr_port@@"
+    replace: "{{ solr_port }}"
+
+- name: Configure alfresco-global.properties (activemq node 0)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_activemq_node0@@"
+    replace: "{{ activemq_node0 }}"
+
+- name: Configure alfresco-global.properties (activemq node 1)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_activemq_node1@@"
+    replace: "{{ activemq_node1 }}"
+
+- name: Configure alfresco-global.properties (shared-file-store host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_shared_file_store_host@@"
+    replace: "{{ shared_file_store_host }}"
+
+- name: Configure alfresco-global.properties (shared-file-store port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_shared_file_store_port@@"
+    replace: "{{ shared_file_store_port }}"
+
+## Mount points
+- name: Create contentstores folder
+  file:
+     path: "{{ alfresco_contentstores_dir }}"
+     state: directory
+     mode: 0750
+     owner: "{{ alfresco_user }}"
+     group: "{{ alfresco_group }}"
+
+- name: Get account name
+  shell: cat /etc/smb-credentials |grep "username"|awk -F'=' '{print $2}'
+  register: smb_account_name
+
+- name: Get alfresco user uid
+  shell: "id -u {{ alfresco_user }}"
+  register: alfresco_uid
+
+- name: Get alfresco group gid
+  shell: "id -g {{ alfresco_group }}"
+  register: alfresco_gid
+
+- name: Mount content store (Azure File Storage)
+  mount:
+    path: "{{ alfresco_contentstores_dir }}"
+    src: "//{{ smb_account_name.stdout }}.file.core.windows.net/alf-contentstores"
+    fstype: cifs
+    opts: nofail,vers=3.0,forceuid,uid={{ alfresco_uid.stdout }},gid={{ alfresco_gid.stdout }},credentials=/etc/smb-credentials,dir_mode=0770,file_mode=0770,serverino
+    state: mounted
+
+- name: Create contentstore folder
+  file:
+     path: "{{ alfresco_contentstores_dir }}/contentstore"
+     state: directory
+     mode: 0750
+     owner: "{{ alfresco_user }}"
+     group: "{{ alfresco_group }}"
+
+- name: Create contentstore.deleted folder
+  file:
+     path: "{{ alfresco_contentstores_dir }}/contentstore.deleted"
+     state: directory
+     mode: 0750
+     owner: "{{ alfresco_user }}"
+     group: "{{ alfresco_group }}"
+
+# Repository port is 8080 by default but code below is just in case a custom port
+# is needed
+- name: Configure zeppelin.properties (alfresco_repository_port)
+  replace:
+    path: "{{ zeppelin_dir }}/zeppelin.properties"
+    regexp: "alfresco_repository_port=8080"
+    replace: "alfresco_repository_port={{ alfresco_port }}"
+
+- name: Execute substituter.sh script
+  command: "{{ zeppelin_dir }}/bin/substituter.sh"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+
+## Start Alfresco
+- name: Enable and Start Tomcat as a service
+  service:
+    name: tomcat
+    state: started
+    enabled: yes
+
+## Start Zeppelin
+- name: Enable Zeppelin as a service
+  service:
+    name: zeppelin
+    enabled: yes
+    state: started

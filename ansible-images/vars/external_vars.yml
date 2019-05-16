@@ -1,0 +1,19 @@
+alfresco_user: alfresco
+alfresco_group: alfresco
+
+activemq_user: activemq
+activemq_group: activemq
+activemq_dir: /opt/activemq
+activemq_host: localhost
+
+#ansible all -i localhost, -m debug -a "msg={{ 'alfresco.123' | password_hash('sha512', 'mysecretsalt') }}"
+alfresco_user_password: "$6$mysecretsalt$O6IjrqVlF95HvaRPoK2NUPeADCoucKNncoYXiV6pVSRKmUb7Tq35HNfbeKpbKM77Dpn26Nv2Qlh0811tOGPfT0"
+#alfresco_admin_password: alfresco.123
+
+alfresco_root_dir: /opt/alfresco
+
+alfresco_java_opts: "-Xms512M -Xmx2048M -XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:ReservedCodeCacheSize=128m"
+
+solr_home: /opt/alfresco-insight-engine
+
+provision_files_path: /var/tmp/ansible

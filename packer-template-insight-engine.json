@@ -1,0 +1,75 @@
+{
+  "variables": {
+    "nexus_user": "{{env `NEXUS_USER`}}",
+    "nexus_password": "{{env `NEXUS_PASSWORD`}}",
+    "client_id": "{{env `TF_VAR_CLIENT_ID`}}",
+    "client_secret": "{{env `TF_VAR_CLIENT_SECRET`}}",
+    "subscription_id": "{{env `TF_VAR_SUBSCRIPTION_ID`}}",
+    "tenant_id": "{{env `TF_VAR_TENANT_ID`}}"
+  },
+  "sensitive-variables": ["nexus_user","nexus_password","client_id",
+        "client_secret", "subscription_id", "tenant_id"  ],
+  "builders": [{
+    "type": "azure-arm",
+    "async_resourcegroup_delete": "false",
+
+    "client_id": "{{user `client_id`}}",
+    "client_secret": "{{user `client_secret`}}",
+    "subscription_id": "{{user `subscription_id`}}",
+    "tenant_id": "{{user `tenant_id`}}",
+
+    "os_type": "Linux",
+    "image_publisher": "OpenLogic",
+    "image_offer": "CentOS",
+    "image_sku": "7.6",
+    "image_version": "7.6.20181219",
+
+    "managed_image_resource_group_name": "Alfresco_6.1_Demo_images",
+    "managed_image_name": "InsightEngineImage",
+
+    "azure_tags": {
+        "dept": "engineering",
+        "task": "image deployment"
+    },
+
+    "location": "UK South",
+    "vm_size": "Standard_DS1_v2"
+  }],
+  "provisioners": [
+  {
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+      "yum install -y ansible",
+      "mkdir -p /var/tmp/ansible/downloaded",
+      "mkdir -p /var/tmp/ansible/misc",
+      "chmod -R 777 /var/tmp/ansible"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  },
+  {
+    "type": "file",
+    "source": "packer-files/misc/solr",
+    "destination": "/var/tmp/ansible/misc/solr"
+  },
+  {
+      "type": "ansible-local",
+      "playbook_file": "./ansible-images/insight-engine-image.yaml",
+      "playbook_dir": "./ansible-images",
+      "extra_arguments": [
+        "--become","--extra-vars \"nexus_user={{ user `nexus_user` }}   nexus_password={{ user `nexus_password` }}\""
+      ]
+  },
+  {
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+
+        "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  }
+
+ ]
+
+}

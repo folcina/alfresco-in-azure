@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  vars_files:
+    - ./vars/external_vars.yml
+  tasks:
+  - include_role:
+      name: db
+  handlers:
+  - name: restart mysqld
+    service:
+      name: mysqld
+      state: restarted

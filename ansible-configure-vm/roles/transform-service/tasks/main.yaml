@@ -1,0 +1,123 @@
+- name: Configure Transformation Service init script (hostname)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_hostname@@"
+    replace: "{{ ansible_hostname }}"
+
+- name: Configure Transformation Service init script (libreoffice_port)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_libreoffice_port@@"
+    replace: "{{ libreoffice_port }}"
+
+- name: Configure Transformation Service init script (libreoffice_java_mem_opts)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_libreoffice_java_mem_opts@@"
+    replace: "{{ libreoffice_java_mem_opts }}"
+
+- name: Configure Transformation Service init script (pdf_renderer_port)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_pdf_renderer_port@@"
+    replace: "{{ pdf_renderer_port }}"
+
+- name: Configure Transformation Service init script (pdf_renderer_java_mem_opts)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_pdf_renderer_java_mem_opts@@"
+    replace: "{{ pdf_renderer_java_mem_opts }}"
+
+- name: Configure Transformation Service init script (imagemagick_port)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_imagemagick_port@@"
+    replace: "{{ imagemagick_port }}"
+
+- name: Configure Transformation Service init script (imagemagick_java_mem_opts)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_imagemagick_java_mem_opts@@"
+    replace: "{{ imagemagick_java_mem_opts }}"
+
+- name: Configure Transformation Service init script (tika_port)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_tika_port@@"
+    replace: "{{ tika_port }}"
+
+- name: Configure Transformation Service init script (tika_java_mem_opts)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_tika_java_mem_opts@@"
+    replace: "{{ tika_java_mem_opts }}"
+
+- name: Configure Transformation Service init script (shared_file_store_port)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_shared_file_store_port@@"
+    replace: "{{ shared_file_store_port }}"
+
+- name: Configure Transformation Service init script (shared_file_store_java_mem_opts)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_shared_file_store_java_mem_opts@@"
+    replace: "{{ shared_file_store_java_mem_opts }}"
+
+- name: Configure Transformation Service init script (shared_file_store_path)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_shared_file_store_path@@"
+    replace: "{{ shared_file_store_dir }}"
+
+- name: Configure Transformation Service init script (transform_router_port)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_transform_router_port@@"
+    replace: "{{ transform_router_port }}"
+
+- name: Configure Transformation Service init script (transform_router_java_mem_opts)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_transform_router_java_mem_opts@@"
+    replace: "{{ transform_router_java_mem_opts }}"
+
+- name: Configure Transformation Service init script (activemq_url)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_activemq_url@@"
+    replace: "{{ activemq_url }}"
+
+- name: Create contentstores folder
+  file:
+     path: "{{ shared_file_store_dir }}"
+     state: directory
+     mode: 0750
+     owner: "{{ alfresco_user }}"
+     group: "{{ alfresco_group }}"
+
+- name: Get account name
+  shell: cat /etc/smb-credentials |grep "username"|awk -F'=' '{print $2}'
+  register: smb_account_name
+
+- name: Get alfresco user uid
+  shell: "id -u {{ alfresco_user }}"
+  register: alfresco_uid
+
+- name: Get alfresco group gid
+  shell: "id -g {{ alfresco_group }}"
+  register: alfresco_gid
+
+- name: Mount Shared File Store (Azure File Storage)
+  mount:
+    path: "{{ shared_file_store_dir }}"
+    src: "//{{ smb_account_name.stdout }}.file.core.windows.net/shared-file-store"
+    fstype: cifs
+    opts: nofail,vers=3.0,forceuid,uid={{ alfresco_uid.stdout }},gid={{ alfresco_gid.stdout }},credentials=/etc/smb-credentials,dir_mode=0770,file_mode=0770,serverino
+    state: mounted
+
+- name: Enable Transformation as a service
+  service:
+    name: transformation
+    enabled: yes
+    state: started

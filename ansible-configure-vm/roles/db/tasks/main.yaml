@@ -1,0 +1,32 @@
+
+- name: Start the MySQL service
+  service: name=mysqld state=started enabled=true
+  register: mysql_start
+
+- name: Change mysql root password and keep track in
+  shell: |
+   password_match=`awk '/A temporary password is generated for/ {a=$0} END{ print a }' /var/log/mysqld.log | awk '{print $(NF)}'`
+   echo $password_match
+   mysql -uroot -p$password_match --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{alfresco_db_pass}}'; flush privileges; "
+   printf "[client]\n \
+   user=root\n \
+   password={{alfresco_db_pass}}\n" > /root/.my.cnf
+  args:
+     creates: /root/.my.cnf
+  register: change_temp_pass
+  notify: restart mysqld
+
+- meta: flush_handlers
+
+- name: create Alfresco DB
+  mysql_db:
+    name: "{{alfresco_db_name}}"
+    state: present
+
+- name: create Alfresco user on DB
+  mysql_user:
+    name: "{{alfresco_db_user}}"
+    password: "{{alfresco_db_pass}}"
+    host: '%'
+    state: present
+    priv: '{{alfresco_db_name}}.*:ALL,GRANT'

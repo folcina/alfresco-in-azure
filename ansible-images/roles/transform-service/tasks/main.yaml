@@ -1,0 +1,24 @@
+---
+- name: Create alfresco user
+  user:
+    name: "{{ alfresco_user }}"
+    shell: /bin/bash
+    password: "{{ alfresco_user_password }}"
+    generate_ssh_key: yes
+    ssh_key_file: ".ssh/id_rsa"
+
+- name: Create alfresco folder
+  file:
+    path: "{{ alfresco_root_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+
+- import_tasks: download-files.yaml
+- import_tasks: install-transformers.yaml
+
+- name: Delete temporary folder
+  file:
+    path: "{{ provision_files_path }}"
+    state: absent

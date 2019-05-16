@@ -1,0 +1,25 @@
+- name: Install MySQL 5.7 repo
+  yum: name=http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm state=present
+
+- name: Install MySQL 5.7
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+     - mysql-community-server
+     - mysql-community-client
+     - MySQL-python
+
+- name: Change password policy (validate_password plugin)
+  lineinfile:
+    path: /etc/my.cnf
+    state: present
+    insertafter: EOF
+    line: 'plugin-load-add=validate_password.so'
+
+- name: Change password policy (validate_password_policy LOW)
+  lineinfile:
+    path: /etc/my.cnf
+    state: present
+    insertafter: EOF
+    line: 'validate_password_policy=LOW'

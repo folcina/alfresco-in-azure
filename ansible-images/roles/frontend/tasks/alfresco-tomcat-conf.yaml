@@ -1,0 +1,155 @@
+- name: Check web-server folder exists
+  stat:
+    path: "{{ alfresco_root_dir }}/web-server"
+  register: web_server_folder
+
+- name: Copy shared folder to tomcat folder
+  synchronize:
+    src: '{{ alfresco_root_dir }}/web-server/shared'
+    dest: "{{ alfresco_root_dir }}/tomcat/"
+    owner: yes
+    group: yes
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+  register: shared_folder
+  when: web_server_folder.stat.exists == true
+
+- name: Copy alfresco.war to webapps folder
+  copy:
+    src: "{{ alfresco_root_dir }}/web-server/webapps/alfresco.war"
+    dest: "{{ alfresco_root_dir }}/tomcat/webapps/alfresco.war"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+    #Avoid copy the file again if an amp is applied
+    force: no
+  register: alfresco_war
+  when: web_server_folder.stat.exists == true
+
+- name: Copy share.war to webapps folder
+  copy:
+    src: "{{ alfresco_root_dir }}/web-server/webapps/share.war"
+    dest: "{{ alfresco_root_dir }}/tomcat/webapps/share.war"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+    #Avoid copy the file again if an amp is applied
+    force: no
+  register: share_war
+  when: web_server_folder.stat.exists == true
+
+- name: Copy ROOT.war to webapps folder
+  copy:
+    src: "{{ alfresco_root_dir }}/web-server/webapps/ROOT.war"
+    dest: "{{ alfresco_root_dir }}/tomcat/webapps/ROOT.war"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+  register: ROOT_war
+  when: web_server_folder.stat.exists == true
+
+- name: Copy digital-workspace.war to webapps folder
+  copy:
+    src: "{{ provision_files_path }}/downloaded/digital-workspace.war"
+    dest: "{{ alfresco_root_dir }}/tomcat/webapps/digital-workspace.war"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+  register: digital_workspace_war
+  when: web_server_folder.stat.exists == true
+
+- name: Copy alfresco.xml to Catalina conf folder
+  copy:
+    src: "{{ alfresco_root_dir }}/web-server/conf/Catalina/localhost/alfresco.xml"
+    dest: "{{ alfresco_root_dir }}/tomcat/conf/Catalina/localhost/alfresco.xml"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+  register: alfresco_xml
+  when: web_server_folder.stat.exists == true
+
+- name: Copy share.xml to Catalina conf folder
+  copy:
+    src: "{{ alfresco_root_dir }}/web-server/conf/Catalina/localhost/share.xml"
+    dest: "{{ alfresco_root_dir }}/tomcat/conf/Catalina/localhost/share.xml"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+  register: share_xml
+  when: web_server_folder.stat.exists == true
+
+- name: Unzip AOS
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/alfresco-aos-module-distributionzip-1.2.2.zip"
+    dest: "{{ provision_files_path }}"
+    remote_src: yes
+  register: aos_unzipped
+
+- name: Check if AOS amp is already applied
+  # Cat command used at the end to avoid returning an error when grep doesn't find occurrences
+  shell: "{{ alfresco_root_dir }}/java/bin/java -jar {{ alfresco_root_dir }}/bin/alfresco-mmt.jar list {{ alfresco_root_dir }}/tomcat/webapps/alfresco.war | /usr/bin/grep -c \"Alfresco Office Services Module\" | cat"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  when: aos_unzipped.failed == false
+  register: aos_amp_applied
+
+- name: Apply AOS amp
+  command: "{{ alfresco_root_dir }}/java/bin/java -jar {{ alfresco_root_dir }}/bin/alfresco-mmt.jar install {{ provision_files_path }}/alfresco-aos-module-1.2.2.amp {{ alfresco_root_dir }}/tomcat/webapps/alfresco.war"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  when: aos_unzipped.failed == false and aos_amp_applied.stdout == '0'
+
+- name: Copy _vti_bin.war to Tomcat webapps folder
+  copy:
+    src: "{{ provision_files_path }}/_vti_bin.war"
+    dest: "{{ alfresco_root_dir }}/tomcat/webapps/_vti_bin.war"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+
+- name: Check if Share Services amp is already applied
+  # Cat command used at the end to avoid returning an error when grep doesn't find occurrences
+  shell: "{{ alfresco_root_dir }}/java/bin/java -jar {{ alfresco_root_dir }}/bin/alfresco-mmt.jar list {{ alfresco_root_dir }}/tomcat/webapps/alfresco.war | /usr/bin/grep -c \"Alfresco Share Services AMP\" | cat"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  register: share_services_amp_applied
+
+- name: Apply Share Services amp
+  command: "{{ alfresco_root_dir }}/java/bin/java -jar {{ alfresco_root_dir }}/bin/alfresco-mmt.jar install {{ alfresco_root_dir }}/amps/alfresco-share-services.amp {{ alfresco_root_dir }}/tomcat/webapps/alfresco.war"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  when: share_services_amp_applied.stdout == '0'
+
+- name: Copy alfresco-global.properties
+  copy:
+    src: "{{ provision_files_path }}/misc/alfresco-global.properties"
+    dest: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+    #Avoid copy the file again if it has been configured
+    force: no
+
+- name: Configure alfresco-global.properties (alfresco_root_dir)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_root_dir@@"
+    replace: "{{ alfresco_root_dir }}"
+
+- name: Copy jdbc driver
+  copy:
+    src: "{{ provision_files_path }}/downloaded/mysql-connector-java-5.1.40.jar"
+    dest: "{{ alfresco_root_dir }}/tomcat/lib/mysql-connector-java-5.1.40.jar"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+    force: no
+
+- name: Clean up not necessary folders
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ alfresco_root_dir }}/web-server"
+  when: >
+      web_server_folder.stat.exists == true

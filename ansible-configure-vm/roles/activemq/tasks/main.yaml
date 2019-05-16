@@ -1,0 +1,12 @@
+- name: Configure activemq.xml
+  replace:
+    path: "{{ activemq_dir }}/conf/activemq.xml"
+    regexp: "@@ansible_activemq_node@@"
+    replace: "{{ activemq_node_peer }}"
+
+## Start Activemq
+- name: Enable and Start Activemq as a service
+  service:
+    name: activemq
+    state: started
+    enabled: yes

@@ -1,0 +1,92 @@
+- name: Download OpenJDK 11.0.1
+  get_url:
+   url: https://download.java.net/java/GA/jdk11/13/GPL/openjdk-11.0.1_linux-x64_bin.tar.gz
+   dest: "{{ provision_files_path }}/downloaded/openjdk-11.0.1_linux-x64_bin.tar.gz"
+   checksum: md5:6c2c81fdc2c30655df6350c337f6bb8b
+   mode: 0444
+
+- name: Download Apache Activemq 5.15.6
+  get_url:
+   url: https://archive.apache.org/dist/activemq/5.15.6/apache-activemq-5.15.6-bin.tar.gz
+   dest: "{{ provision_files_path }}/downloaded/apache-activemq-5.15.6-bin.tar.gz"
+   checksum: md5:e79acb9dba66ba7b80e3148ce60f5c72
+   mode: 0444
+
+- name: Create activemq user
+  user:
+    name: "{{ activemq_user }}"
+    shell: /bin/bash
+
+- name: Create activemq folder
+  file:
+    path: "{{ activemq_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ activemq_user }}"
+    group: "{{ activemq_group }}"
+
+- name: Untar Apache activemq
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/apache-activemq-5.15.6-bin.tar.gz"
+    dest: "{{ activemq_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+    creates: "{{ activemq_dir }}/bin/activemq"
+  become_user: "{{ activemq_user }}"
+  become: yes
+
+- name: Copy activemq init script
+  copy:
+    src: '{{ provision_files_path }}/misc/activemq'
+    dest: "/etc/init.d/activemq"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0754
+
+- name: Configure activemq init script (activemq_dir)
+  replace:
+    path: "/etc/init.d/activemq"
+    regexp: "@@ansible_activemq_dir@@"
+    replace: "{{ activemq_dir }}"
+
+- name: Configure activemq init script (activemq_user)
+  replace:
+    path: "/etc/init.d/activemq"
+    regexp: "@@ansible_activemq_user@@"
+    replace: "{{ activemq_user }}"
+
+- name: Configure activemq init script (java_home)
+  replace:
+    path: "/etc/init.d/activemq"
+    regexp: "@@ansible_java_home@@"
+    replace: "{{ activemq_dir }}/java"
+
+- name: Preconfigure networkConnectors (activemq.xml)
+  blockinfile:
+    path: "{{ activemq_dir }}/conf/activemq.xml"
+    insertbefore: '</broker>'
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+    block: |
+         <networkConnectors>
+           <networkConnector uri="static:(tcp://@@ansible_activemq_node@@:61616)"/>
+         </networkConnectors>
+
+- name: Untar java (openjdk 11.0.1)
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/openjdk-11.0.1_linux-x64_bin.tar.gz"
+    dest: "{{ activemq_dir }}"
+    remote_src: yes
+    creates: "{{ activemq_dir }}/jdk-11.0.1"
+  register: jdk_folder
+  become_user: "{{ activemq_user }}"
+  become: yes
+
+- name: Create java folder link
+  file:
+    src: "{{ activemq_dir }}/jdk-11.0.1"
+    dest: "{{ activemq_dir }}/java"
+    state: link
+    owner: "{{ activemq_user }}"
+    group: "{{ activemq_group }}"
+  when: jdk_folder.failed == false

@@ -1,0 +1,77 @@
+- name: Install ImageMagick
+  yum:
+    name: '{{ packages }}'
+    state: present
+  vars:
+    packages:
+      - '{{ provision_files_path }}/downloaded/imagemagick-distribution-7.0.7-27-libs-linux.rpm'
+      - '{{ provision_files_path }}/downloaded/imagemagick-distribution-7.0.7-27-linux.rpm'
+
+- name: unzip LibreOffice
+  unarchive:
+    src: '{{ provision_files_path }}/downloaded/libreoffice-dist-5.4.6-linux.gz'
+    dest: "{{ provision_files_path }}"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+    creates: '{{ provision_files_path }}/LibreOffice_5.4.6.2_Linux_x86-64_rpm'
+
+- name: install LibreOffice in temporary location
+  command: '{{ provision_files_path }}/LibreOffice_5.4.6.2_Linux_x86-64_rpm/install \
+      {{ provision_files_path }}/LibreOffice_5.4.6.2_Linux_x86-64_rpm {{ provision_files_path }}'
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  args:
+    creates: '{{ provision_files_path }}/opt/libreoffice5.4'
+
+- name: copy Libreoffice to opt folder
+  synchronize:
+    src: '{{ provision_files_path }}/opt/libreoffice5.4'
+    dest: "/opt"
+    owner: yes
+    group: yes
+    recursive: yes
+  delegate_to: 127.0.0.1
+
+- name: Untar alfresco-pdf-renderer
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/alfresco-pdf-renderer-1.1-linux.tgz"
+    dest: "/usr/bin"
+    remote_src: yes
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+    creates: "/usr/bin/alfresco-pdf-renderer"
+
+- name: Untar java (openjdk 11.0.1)
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/openjdk-11.0.1_linux-x64_bin.tar.gz"
+    dest: "{{ alfresco_root_dir }}"
+    remote_src: yes
+    creates: "{{ alfresco_root_dir }}/jdk-11.0.1"
+  register: jdk_folder
+  become_user: "{{ alfresco_user }}"
+  become: yes
+
+- name: Create java folder link
+  file:
+    src: "{{ alfresco_root_dir }}/jdk-11.0.1"
+    dest: "{{ alfresco_root_dir }}/java"
+    state: link
+    owner: "{{ alfresco_user }}"
+    group: "{{ alfresco_group }}"
+  when: jdk_folder.failed == false
+
+- name: Copy Transformation Service init script
+  copy:
+    src: '{{ provision_files_path }}/misc/transformation-init-script'
+    dest: "/etc/init.d/transformation"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Configure Transformation Service init script (alfresco_user)
+  replace:
+    path: "/etc/init.d/transformation"
+    regexp: "@@ansible_alfresco_user@@"
+    replace: "{{ alfresco_user }}"

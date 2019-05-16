@@ -1,0 +1,384 @@
+- name: Enable Ip forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: remove firewall package
+  yum:
+    name: firewalld.noarch
+    state: absent
+
+- name: packages are installed
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - unzip
+      - vim
+      - net-tools.x86_64
+      - iptables-services.x86_64
+
+- name: Start iptables
+  service:
+    name: iptables
+    state: started
+    enabled: yes
+
+- name: Flush existing iptables rules
+  iptables:
+    flush: true
+
+- name: Iptables rule - allow all loopback traffic
+  iptables:
+    action: append
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+- name: Iptables rule - allow established connections
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+
+- name: Iptables rule - allow port ping traffic
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: icmp
+
+- name: Iptables rule - allow port 22/SSH traffic
+  iptables:
+    chain: INPUT
+    destination_port: 22
+    jump: ACCEPT
+    protocol: tcp
+
+- name: Iptables rule - drop any traffic without rule
+  iptables:
+    chain: INPUT
+    jump: DROP
+
+- name: Iptables rule => "-P FORWARD ACCEPT"
+  iptables:
+    chain: FORWARD
+    policy: ACCEPT
+
+- name: Iptables rule => "-P OUTPUT ACCEPT"
+  iptables:
+    chain: OUTPUT
+    policy: ACCEPT
+
+- name: Iptables rule => "-t nat -A POSTROUTING -o eth0 -j MASQUERADE"
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    out_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: MASQUERADE
+
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8161 -j DNAT --to activemq-0-vm:8161"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8161
+    to_destination: "{{ activemq_0_host }}:8161"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8162 -j DNAT --to activemq-1-vm:8161"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8162
+    to_destination: "{{ activemq_1_host }}:8161"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8983 -j DNAT --to insight-0-vm:8983"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8983
+    to_destination: "{{ insight_0_host }}:8983"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8984 -j DNAT --to insight-1-vm:8983"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8984
+    to_destination: "{{ insight_1_host }}:8983"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8090 -j DNAT --to transformation-0-vm:8090"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8090
+    to_destination: "{{ transformation_0_host }}:8090"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8091 -j DNAT --to transformation-0-vm:8091"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8091
+    to_destination: "{{ transformation_0_host }}:8091"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8092 -j DNAT --to transformation-0-vm:8092"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8092
+    to_destination: "{{ transformation_0_host }}:8092"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8093 -j DNAT --to transformation-0-vm:8093"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8093
+    to_destination: "{{ transformation_0_host }}:8093"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8094 -j DNAT --to transformation-0-vm:8094"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8094
+    to_destination: "{{ transformation_0_host }}:8094"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8095 -j DNAT --to transformation-0-vm:8095"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8095
+    to_destination: "{{ transformation_0_host }}:8095"
+
+- name: Iptables rule => " -t nat -A PREROUTING -i eth0 -p tcp --dport 8190 -j DNAT --to transformation-1-vm:8090"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8190
+    to_destination: "{{ transformation_1_host }}:8090"
+
+- name: Iptables rule => " -t nat -A PREROUTING -i eth0 -p tcp --dport 8191 -j DNAT --to transformation-1-vm:8091"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8191
+    to_destination: "{{ transformation_1_host }}:8091"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8192 -j DNAT --to transformation-1-vm:8092"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8192
+    to_destination: "{{ transformation_1_host }}:8092"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8193 -j DNAT --to transformation-1-vm:8093"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8193
+    to_destination: "{{ transformation_1_host }}:8093"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8194 -j DNAT --to transformation-1-vm:8094"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8194
+    to_destination: "{{ transformation_1_host }}:8094"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 8195 -j DNAT --to transformation-1-vm:8095"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 8195
+    to_destination: "{{ transformation_1_host }}:8095"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2200 -j DNAT --to activemq-0-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2200
+    to_destination: "{{ activemq_0_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2201 -j DNAT --to activemq-1-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2201
+    to_destination: "{{ activemq_1_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2202 -j DNAT --to db-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2202
+    to_destination: "{{ db_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2203 -j DNAT --to frontend-0-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2203
+    to_destination: "{{ frontend_0_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2204 -j DNAT --to frontend-1-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2204
+    to_destination: "{{ frontend_1_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2205 -j DNAT --to insight-0-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2205
+    to_destination: "{{ insight_0_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2206 -j DNAT --to insight-1-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2206
+    to_destination: "{{ insight_1_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2207 -j DNAT --to transformation-0-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2207
+    to_destination: "{{ transformation_0_host }}:22"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 2208 -j DNAT --to transformation-1-vm:22"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 2208
+    to_destination: "{{ transformation_1_host }}:22"
+
+- name: Iptables rule => " -t nat -A PREROUTING -i eth0 -p tcp --dport 50500 -j DNAT --to frontend-0-vm:50500"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 50500
+    to_destination: "{{ frontend_0_host }}:50500"
+
+- name: Iptables rule => "-t nat -A PREROUTING -i eth0 -p tcp --dport 50501 -j DNAT --to frontend-1-vm:50500"
+  iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    jump: DNAT
+    destination_port: 50501
+    to_destination: "{{ frontend_1_host }}:50500"
+
+- name: Save iptables rules
+  command: service iptables save

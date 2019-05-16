@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  vars_files:
+    - ./vars/external_vars.yml
+  tasks:
+  - include_tasks: tasks/centos-conf.yaml
+  - include_role:
+      name: insight-engine

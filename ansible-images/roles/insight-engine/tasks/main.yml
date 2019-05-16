@@ -1,0 +1,83 @@
+- name: Download Jre 1.8.0.25
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/com/oracle/java/jre/1.8.0_25/jre-1.8.0_25-linux.tgz
+   dest: "{{ provision_files_path }}/downloaded/jre-1.8.0_25-linux.tgz"
+   checksum: md5:e7ca41dec560f564245abf0e932d9401
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Alfresco Insight Engine 1.0.0 (distribution zip)
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/alfresco/alfresco-insight-engine-distribution/1.0.0/alfresco-insight-engine-distribution-1.0.0.zip
+   dest: "{{ provision_files_path }}/downloaded/alfresco-insight-engine-distribution-1.0.0.zip"
+   checksum: md5:40dc314d4e6f27f0125df9d164498bbb
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Create alfresco user
+  user:
+    name: "{{ alfresco_user }}"
+    shell: /bin/bash
+    password: "{{ alfresco_user_password }}"
+    generate_ssh_key: yes
+    ssh_key_file: ".ssh/id_rsa"
+
+- name: Creates Java (Jre 1.8) folders
+  file:
+    path: "/opt/jre-1.8.0_25"
+    state: directory
+    mode: 0755
+
+- name: Untar java (Jre 1.8)
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/jre-1.8.0_25-linux.tgz"
+    dest: "/opt/jre-1.8.0_25"
+    remote_src: yes
+    creates: "/opt/jre-1.8.0_25/bin/java"
+    extra_opts: [--strip-components=1]
+
+- name: Unzip Insight Engine
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/alfresco-insight-engine-distribution-1.0.0.zip"
+    dest: "{{ provision_files_path }}"
+    remote_src: yes
+  become_user: "{{ alfresco_user }}"
+  become: yes
+
+- name: Copy alfresco-insight-engine folder
+  synchronize:
+    src: '{{ provision_files_path }}/alfresco-insight-engine'
+    dest: /opt
+    owner: yes
+    group: yes
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Configure solr.in.sh (SOLR_JAVA_HOME)
+  replace:
+    path: "/opt/alfresco-insight-engine/solr.in.sh"
+    regexp: "^#SOLR_JAVA_HOME.*"
+    replace: "SOLR_JAVA_HOME=/opt/jre-1.8.0_25"
+
+- name: Copy solr init script
+  copy:
+    src: '{{ provision_files_path }}/misc/solr'
+    dest: "/etc/init.d/solr"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0754
+
+- name: Configure solr init script (solr_home)
+  replace:
+    path: "/etc/init.d/solr"
+    regexp: "@@ansible_solr_home@@"
+    replace: "{{ solr_home }}"
+
+- name: Configure solr init script (alfresco_user)
+  replace:
+    path: "/etc/init.d/solr"
+    regexp: "@@ansible_alfresco_user@@"
+    replace: "{{ alfresco_user }}"

@@ -1,0 +1,108 @@
+- name: Download OpenJDK 11.0.1
+  get_url:
+   url: https://download.java.net/java/GA/jdk11/13/GPL/openjdk-11.0.1_linux-x64_bin.tar.gz
+   dest: "{{ provision_files_path }}/downloaded/openjdk-11.0.1_linux-x64_bin.tar.gz"
+   checksum: md5:6c2c81fdc2c30655df6350c337f6bb8b
+   mode: 0444
+
+- name: Download Imagemagick 7.0.7-27
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/imagemagick/imagemagick-distribution/7.0.7-27/imagemagick-distribution-7.0.7-27-linux.rpm
+   dest: "{{ provision_files_path }}/downloaded/imagemagick-distribution-7.0.7-27-linux.rpm"
+   checksum: md5:151b33ae32e2f83562bc40cddf0c9b85
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Imagemagick 7.0.7-27 libs
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/imagemagick/imagemagick-distribution/7.0.7-27/imagemagick-distribution-7.0.7-27-libs-linux.rpm
+   dest: "{{ provision_files_path }}/downloaded/imagemagick-distribution-7.0.7-27-libs-linux.rpm"
+   checksum: md5:a2ac92cd40233a32b9f4fa5f79fee33e
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Libreoffice 5.4.6
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/libreoffice/libreoffice-dist/5.4.6/libreoffice-dist-5.4.6-linux.gz
+   dest: "{{ provision_files_path }}/downloaded/libreoffice-dist-5.4.6-linux.gz"
+   checksum: md5:97c4d378284c34c3c53e03727f173877
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Alfresco Transformer Router JAR (1.0.2.1)
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-transform-router/1.0.2.1/alfresco-transform-router-1.0.2.1.jar
+   dest: "{{ alfresco_root_dir }}/alfresco-transform-router-1.0.2.1.jar"
+   checksum: md5:f950ffff20dedaf4369244a12847c674
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+   owner: "{{ alfresco_user }}"
+   group: "{{ alfresco_group }}"
+
+- name: Download Alfresco Docker Alfresco-pdf-renderer JAR (2.0.17)
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-docker-alfresco-pdf-renderer/2.0.17/alfresco-docker-alfresco-pdf-renderer-2.0.17.jar
+   dest: "{{ alfresco_root_dir }}/alfresco-docker-alfresco-pdf-renderer-2.0.17.jar"
+   checksum: md5:26271e84666d14e905ea605949e014f2
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+   owner: "{{ alfresco_user }}"
+   group: "{{ alfresco_group }}"
+
+- name: Download Alfresco Docker Imagemagick JAR (2.0.17)
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-docker-imagemagick/2.0.17/alfresco-docker-imagemagick-2.0.17.jar
+   dest: "{{ alfresco_root_dir }}/alfresco-docker-imagemagick-2.0.17.jar"
+   checksum: md5:d84522b72d803ce8088593db8711c0cf
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+   owner: "{{ alfresco_user }}"
+   group: "{{ alfresco_group }}"
+
+- name: Download Alfresco Docker Libreoffice JAR (2.0.17)
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-docker-libreoffice/2.0.17/alfresco-docker-libreoffice-2.0.17.jar
+   dest: "{{ alfresco_root_dir }}/alfresco-docker-libreoffice-2.0.17.jar"
+   checksum: md5:e2daf97f682d6d728d1d4b3a6a494bea
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+   owner: "{{ alfresco_user }}"
+   group: "{{ alfresco_group }}"
+
+- name: Download Alfresco Docker Tika JAR (2.0.17)
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-docker-tika/2.0.17/alfresco-docker-tika-2.0.17.jar
+   dest: "{{ alfresco_root_dir }}/alfresco-docker-tika-2.0.17.jar"
+   checksum: md5:9cd7298be2e85522cb3358d15f887f38
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+   owner: "{{ alfresco_user }}"
+   group: "{{ alfresco_group }}"
+
+- name: Download Alfresco Shared File Store Controller JAR (0.5.3)
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-shared-file-store-controller/0.5.3/alfresco-shared-file-store-controller-0.5.3.jar
+   dest: "{{ alfresco_root_dir }}/alfresco-shared-file-store-controller-0.5.3.jar"
+   checksum: md5:d9c7fcc6a4b02b70e64699fbd4a630f4
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+   owner: "{{ alfresco_user }}"
+   group: "{{ alfresco_group }}"
+
+- name: Download Alfresco PDF Renderer (1.1)
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/service/local/repositories/releases/content/org/alfresco/alfresco-pdf-renderer/1.1/alfresco-pdf-renderer-1.1-linux.tgz
+   dest: "{{ provision_files_path }}/downloaded/alfresco-pdf-renderer-1.1-linux.tgz"
+   checksum: md5:a1e07dad881981e6eebca5bedf647a48
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"

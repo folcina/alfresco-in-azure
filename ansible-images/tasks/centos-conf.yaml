@@ -1,0 +1,38 @@
+- name: disable firewall
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: flush iptables rules
+  iptables:
+     flush: true
+  register: flush_iptables
+
+- name: Save flush status iptables
+  shell: "iptables-save > /etc/sysconfig/iptables"
+
+- name: disable selinux
+  selinux:
+    state: disabled
+
+- name: packages are installed
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - unzip
+      - psmisc.x86_64
+      - fontconfig
+      - libICE.x86_64
+      - libSM.x86_64
+      - libXrender.x86_64
+      - libXext.x86_64
+      - libXinerama.x86_64
+      - cups-libs.x86_64
+      - mesa-libGLU.x86_64
+      - cairo.x86_64
+      - dbus-glib-devel.x86_64
+      - vim
+      - cifs-utils
+      - net-tools.x86_64

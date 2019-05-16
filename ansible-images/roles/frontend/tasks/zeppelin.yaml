@@ -1,0 +1,52 @@
+- name: Download Alfresco Insight Zeppelin
+  get_url:
+   url: https://nexus.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/alfresco-insight-zeppelin/1.1.0.1/alfresco-insight-zeppelin-1.1.0.1.zip
+   dest: "{{ provision_files_path }}/downloaded/alfresco-insight-zeppelin-1.1.0.1.zip"
+   checksum: md5:91e8391a621514eb936f173d538a032c
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Unzip Apache Zeppelin
+  unarchive:
+    src: "{{ provision_files_path }}/downloaded/alfresco-insight-zeppelin-1.1.0.1.zip"
+    dest: "{{ provision_files_path  }}"
+    remote_src: yes
+  become_user: "{{ alfresco_user }}"
+  become: yes
+
+- name: Copy zeppelin folder
+  synchronize:
+    src: '{{ provision_files_path }}/zeppelin'
+    dest: /opt
+    owner: yes
+    group: yes
+    recursive: yes
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Copy zeppelin init script
+  copy:
+    src: '{{ provision_files_path }}/misc/zeppelin-init-script'
+    dest: "/etc/init.d/zeppelin"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0754
+
+- name: Configure zeppelin init script (zeppelin_home)
+  replace:
+    path: "/etc/init.d/zeppelin"
+    regexp: "@@ansible_zeppelin_dir@@"
+    replace: "/opt/zeppelin"
+
+- name: Configure zeppelin init script (java_home)
+  replace:
+    path: "/etc/init.d/zeppelin"
+    regexp: "@@ansible_java_home@@"
+    replace: "{{ alfresco_root_dir }}/java"
+
+- name: Configure zeppelin init script (alfresco_user)
+  replace:
+    path: "/etc/init.d/zeppelin"
+    regexp: "@@ansible_alfresco_user@@"
+    replace: "{{ alfresco_user }}"

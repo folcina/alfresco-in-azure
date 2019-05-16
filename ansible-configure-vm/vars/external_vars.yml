@@ -1,0 +1,58 @@
+alfresco_user: alfresco
+alfresco_group: alfresco
+alfresco_port: 8080
+
+activemq_user: activemq
+activemq_group: activemq
+activemq_dir: /opt/activemq
+activemq_node0: activemq-0-vm
+activemq_node1: activemq-1-vm
+
+#ansible all -i localhost, -m debug -a "msg={{ 'alfresco.123' | password_hash('sha512', 'mysecretsalt') }}"
+alfresco_user_password: "$6$mysecretsalt$O6IjrqVlF95HvaRPoK2NUPeADCoucKNncoYXiV6pVSRKmUb7Tq35HNfbeKpbKM77Dpn26Nv2Qlh0811tOGPfT0"
+alfresco_admin_password: alfresco.123
+
+#printf '%s' "alfresco.123" | iconv -t utf-16le|openssl md4| awk '{print $2}'
+alfresco_admin_password_hash: be79b8e96af24977fe0bfcf97eae488b
+
+monitor_role_pwd: alfresco.123
+control_role_pwd: alfresco.123
+
+alfresco_db_user: alfresco
+alfresco_db_pass: alfresco.123
+alfresco_db_name: alfresco61
+alfresco_db_host: db-vm
+
+alfresco_root_dir: /opt/alfresco
+alfresco_contentstores_dir: /alf-contentstores
+
+alfresco_java_opts: "-Xms512M -Xmx2048M -XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:ReservedCodeCacheSize=128m -Dcom.sun.management.jmxremote"
+
+tomcat_shutdown_port: 8005
+tomcat_port: 8080
+tomcat_ssl_port: 8443
+tomcat_ajp_port: 8009
+
+zeppelin_dir: /opt/zeppelin
+
+solr_port: 8983
+solr_home: /opt/alfresco-insight-engine
+solr_java_mem: "-Xms512m -Xmx1g"
+solr_gc_log_opts: "-Xloggc:./gc.log -verbose:gc -XX:+PrintGCDateStamps -XX:+PrintGCDetails"
+solr_rerank_properties_file: /opt/alfresco-insight-engine/solrhome/templates/rerank/conf/solrcore.properties
+
+
+libreoffice_port: 8090
+libreoffice_java_mem_opts: "-Xms512m -Xmx512m"
+pdf_renderer_port: 8091
+pdf_renderer_java_mem_opts: "-Xms128m -Xmx128m"
+imagemagick_port: 8092
+imagemagick_java_mem_opts: "-Xms256m -Xmx256m"
+tika_port: 8093
+tika_java_mem_opts: "-Xms256m -Xmx256m"
+shared_file_store_port: 8094
+shared_file_store_java_mem_opts: "-Xms256m -Xmx256m"
+shared_file_store_dir: /shared-file-store
+transform_router_port: 8095
+transform_router_java_mem_opts: "-Xms512m -Xmx512m"
+activemq_url: "failover:(tcp://activemq-0-vm:61616,tcp://activemq-1-vm:61616)"

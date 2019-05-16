@@ -1,0 +1,146 @@
+#!/bin/bash
+#/etc/init.d/transformation
+### BEGIN INIT INFO
+# Provides: transformation
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       Controls Transformation Engine as a Service
+### END INIT INFO
+
+export HOSTNAME="@@ansible_hostname@@"
+export LC_ALL="en_US.UTF-8"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export JAVA_HOME="/opt/alfresco/java"
+
+RUNAS="@@ansible_alfresco_user@@"
+
+#LIBREOFFICE
+LIBREOFFICE_PORT="@@ansible_libreoffice_port@@"
+LIBREOFFICE_JAR="/opt/alfresco/alfresco-docker-libreoffice-2.0.17.jar"
+LIBREOFFICE_JAVA_OPTS="-Dserver.port=$LIBREOFFICE_PORT @@ansible_libreoffice_java_mem_opts@@"
+LIBREOFFICE_PID_FILE="/var/run/libreoffice.pid"
+
+#PDF_RENDERER
+PDF_RENDERER_PORT="@@ansible_pdf_renderer_port@@"
+PDF_RENDERER_JAR="/opt/alfresco/alfresco-docker-alfresco-pdf-renderer-2.0.17.jar"
+PDF_RENDERER_JAVA_OPTS="-Dserver.port=$PDF_RENDERER_PORT @@ansible_pdf_renderer_java_mem_opts@@"
+PDF_RENDERER_PID_FILE="/var/run/pdf-renderer.pid"
+
+#IMAGEMAGICK
+IMAGEMAGICK_PORT="@@ansible_imagemagick_port@@"
+IMAGEMAGICK_JAR="/opt/alfresco/alfresco-docker-imagemagick-2.0.17.jar"
+IMAGEMAGICK_JAVA_OPTS="-Dserver.port=$IMAGEMAGICK_PORT @@ansible_imagemagick_java_mem_opts@@"
+IMAGEMAGICK_PID_FILE="/var/run/imagemagick.pid"
+
+#TIKA
+TIKA_PORT="@@ansible_tika_port@@"
+TIKA_JAR="/opt/alfresco/alfresco-docker-tika-2.0.17.jar"
+TIKA_JAVA_OPTS="-Dserver.port=$TIKA_PORT @@ansible_tika_java_mem_opts@@"
+TIKA_PID_FILE="/var/run/tika.pid"
+
+#SHARED FILE STORE
+SHARED_FILE_STORE_PORT="@@ansible_shared_file_store_port@@"
+SHARED_FILE_STORE_JAR="/opt/alfresco/alfresco-shared-file-store-controller-0.5.3.jar"
+SHARED_FILE_STORE_JAVA_OPTS="-Dserver.port=$SHARED_FILE_STORE_PORT @@ansible_shared_file_store_java_mem_opts@@ -DfileStorePath=@@ansible_shared_file_store_path@@"
+SHARED_FILE_STORE_PID_FILE="/var/run/shared-file-store.pid"
+
+#TRANSFORM ROUTER
+TRANSFORM_ROUTER_PORT="@@ansible_transform_router_port@@"
+TRANSFORM_ROUTER_JAR="/opt/alfresco/alfresco-transform-router-1.0.2.1.jar "
+TRANSFORM_ROUTER_JAVA_OPTS="-Dserver.port=$TRANSFORM_ROUTER_PORT @@ansible_transform_router_java_mem_opts@@"
+TRANSFORM_ROUTER_PID_FILE="/var/run/transform-router.pid"
+
+export LIBREOFFICE_URL=http://localhost:$LIBREOFFICE_PORT
+export PDF_RENDERER_URL=http://localhost:$PDF_RENDERER_PORT
+export TIKA_URL=http://localhost:$TIKA_PORT
+export IMAGEMAGICK_URL=http://localhost:$IMAGEMAGICK_PORT
+export FILE_STORE_URL="http://localhost:$SHARED_FILE_STORE_PORT/alfresco/api/-default-/private/sfs/versions/1/file"
+export ACTIVEMQ_URL="@@ansible_activemq_url@@"
+
+
+start_service(){
+  # $1 Service name
+  # $2 PID file
+  # $3 JAVA_OPTS
+  # $4 PATH to jar
+
+  echo "Starting $1 ..."
+  if [ ! -f $2 ]; then
+            su --preserve-environment -c "nohup $JAVA_HOME/bin/java -jar $3 $4 2>> /dev/null >> /dev/null" "$RUNAS" &
+            echo $! > $2
+            echo "$1 started ..."
+        else
+            echo "$1 is already running ..."
+        fi
+}
+
+stop_service(){
+  # $1 Service name
+  # $2 PID file
+  if [ -f $2 ]; then
+     echo "$1 stoping ..."
+     PID=$(cat $2);
+     # The parent PID launches a bash process and then the java command
+     # Output of pstree is like:
+     #    su(1548)───bash(1549)───java(1550)─┬─{java}(1551)
+     PID_NOHUP_CHILD=$(pstree -p $PID |awk -F'---' '{print $3}'|awk -F '[()]' '{print $2}')
+     if [ $(pstree -p $PID |grep -c "soffice") != 0 ];then
+       SOFFICE_PID=$(pstree -p $PID |awk -F'---' '{print $3}'|awk -F '[()]' '{print $4}')
+       kill $PID;
+       kill $PID_NOHUP_CHILD;
+       kill $SOFFICE_PID;
+
+     else
+       kill $PID;
+       kill $PID_NOHUP_CHILD;
+     fi
+     echo "$1 stopped ..."
+     rm $2
+  else
+     echo "$1 is not running ..."
+  fi
+
+}
+
+case $1 in
+    start)
+        #SHARED_FILE_STORE
+        start_service "Shared File Store" "$SHARED_FILE_STORE_PID_FILE" "$SHARED_FILE_STORE_JAVA_OPTS" "$SHARED_FILE_STORE_JAR"
+
+        #TIKA
+        start_service "Tika" "$TIKA_PID_FILE" "$TIKA_JAVA_OPTS" "$TIKA_JAR"
+
+        #LIBREOFFICE
+        start_service "LibreOffice" "$LIBREOFFICE_PID_FILE" "$LIBREOFFICE_JAVA_OPTS" "$LIBREOFFICE_JAR"
+
+        #PDF_RENDERER
+        start_service "PDF Renderer" "$PDF_RENDERER_PID_FILE" "$PDF_RENDERER_JAVA_OPTS" "$PDF_RENDERER_JAR"
+
+        #IMAGEMAGICK
+        start_service "Imagemagick" "$IMAGEMAGICK_PID_FILE" "$IMAGEMAGICK_JAVA_OPTS" "$IMAGEMAGICK_JAR"
+
+        #TRANSFORM_ROUTER
+        start_service "Transform Router" "$TRANSFORM_ROUTER_PID_FILE" "$TRANSFORM_ROUTER_JAVA_OPTS" "$TRANSFORM_ROUTER_JAR"
+    ;;
+    stop)
+        #SHARED_FILE_STORE
+        stop_service "Shared File Store" "$SHARED_FILE_STORE_PID_FILE"
+
+        #TIKA
+        stop_service "Tika" "$TIKA_PID_FILE"
+
+        #LIBREOFFICE
+        stop_service "LibreOffice" "$LIBREOFFICE_PID_FILE"
+
+        #PDF_RENDERER
+        stop_service "PDF Renderer" "$PDF_RENDERER_PID_FILE"
+
+        #IMAGEMAGICK
+        stop_service "Imagemagick" "$IMAGEMAGICK_PID_FILE"
+
+        #TRANSFORM_ROUTER
+        stop_service "Transform Router" "$TRANSFORM_ROUTER_PID_FILE"
+    ;;
+esac

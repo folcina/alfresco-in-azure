@@ -1,0 +1,24 @@
+---
+- name: Configure solr.in.sh (SOLR_JAVA_MEM)
+  replace:
+    path: "{{ solr_home }}/solr.in.sh"
+    regexp: "^#SOLR_JAVA_MEM.*"
+    replace: "SOLR_JAVA_MEM={{ solr_java_mem }}"
+
+- name: Configure solr.in.sh (GC_LOG_OPTS)
+  replace:
+    path: "{{ solr_home }}/solr.in.sh"
+    regexp: "^GC_LOG_OPTS.*"
+    replace: "GC_LOG_OPTS=\"{{ solr_gc_log_opts }}\""
+
+- name: Configure rerank template solrcore.properties (alfresco.host)
+  replace:
+    path: "{{ solr_rerank_properties_file }}"
+    regexp: "^alfresco.host.*"
+    replace: "alfresco.host={{ alfresco_repo_internal_lb }}"
+
+- name: Enable Solr as a service
+  service:
+    name: solr
+    enabled: yes
+    state: started

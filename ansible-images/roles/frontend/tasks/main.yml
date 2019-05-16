@@ -1,0 +1,10 @@
+---
+- import_tasks: download-files.yaml
+- import_tasks: alfresco.yaml
+- import_tasks: tomcat.yaml
+- import_tasks: alfresco-tomcat-conf.yaml
+- import_tasks: zeppelin.yaml
+- name: Delete temporary folder
+  file:
+    path: "{{ provision_files_path }}"
+    state: absent

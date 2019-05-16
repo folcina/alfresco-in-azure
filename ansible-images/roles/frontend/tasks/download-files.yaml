@@ -1,0 +1,81 @@
+- name: Download OpenJDK 11.0.1
+  get_url:
+   url: https://download.java.net/java/GA/jdk11/13/GPL/openjdk-11.0.1_linux-x64_bin.tar.gz
+   dest: "{{ provision_files_path }}/downloaded/openjdk-11.0.1_linux-x64_bin.tar.gz"
+   checksum: md5:6c2c81fdc2c30655df6350c337f6bb8b
+   mode: 0444
+
+- name: Download Apache Activemq 5.15.6
+  get_url:
+   url: https://archive.apache.org/dist/activemq/5.15.6/apache-activemq-5.15.6-bin.tar.gz
+   dest: "{{ provision_files_path }}/downloaded/apache-activemq-5.15.6-bin.tar.gz"
+   checksum: md5:e79acb9dba66ba7b80e3148ce60f5c72
+   mode: 0444
+
+- name: Download Jre 1.8.0.25
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/com/oracle/java/jre/1.8.0_25/jre-1.8.0_25-linux.tgz
+   dest: "{{ provision_files_path }}/downloaded/jre-1.8.0_25-linux.tgz"
+   checksum: md5:e7ca41dec560f564245abf0e932d9401
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Tomcat 8.5.34
+  get_url:
+   url: https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/8.5.34/tomcat-8.5.34.tar.gz
+   dest: "{{ provision_files_path }}/downloaded/tomcat-8.5.34.tar.gz"
+   checksum: md5:479f56be477c87c6fcfb3cd682183c2e
+   mode: 0444
+
+- name: Download Libreoffice 5.4.6
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/libreoffice/libreoffice-dist/5.4.6/libreoffice-dist-5.4.6-linux.gz
+   dest: "{{ provision_files_path }}/downloaded/libreoffice-dist-5.4.6-linux.gz"
+   checksum: md5:97c4d378284c34c3c53e03727f173877
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Imagemagick 7.0.7-27
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/imagemagick/imagemagick-distribution/7.0.7-27/imagemagick-distribution-7.0.7-27-linux.rpm
+   dest: "{{ provision_files_path }}/downloaded/imagemagick-distribution-7.0.7-27-linux.rpm"
+   checksum: md5:151b33ae32e2f83562bc40cddf0c9b85
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Imagemagick 7.0.7-27 libs
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/imagemagick/imagemagick-distribution/7.0.7-27/imagemagick-distribution-7.0.7-27-libs-linux.rpm
+   dest: "{{ provision_files_path }}/downloaded/imagemagick-distribution-7.0.7-27-libs-linux.rpm"
+   checksum: md5:a2ac92cd40233a32b9f4fa5f79fee33e
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Alfresco Content Services 6.1.0 (distribution zip)
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/alfresco/alfresco-content-services-distribution/6.1.0/alfresco-content-services-distribution-6.1.0.zip
+   dest: "{{ provision_files_path }}/downloaded/alfresco-content-services-distribution-6.1.0.zip"
+   checksum: md5:8c649afb76e9942762376b5b62a10592
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Alfresco AOS Module 1.2.2 (distribution zip)
+  get_url:
+   url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/alfresco/aos-module/alfresco-aos-module-distributionzip/1.2.2/alfresco-aos-module-distributionzip-1.2.2.zip
+   dest: "{{ provision_files_path }}/downloaded/alfresco-aos-module-distributionzip-1.2.2.zip"
+   checksum: md5:d9a2bbc8a7223bf8f20a0f0068425954
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download MySQL jdbc driver 5.1.40
+  get_url:
+   url: https://repo.maven.apache.org/maven2/mysql/mysql-connector-java/5.1.40/mysql-connector-java-5.1.40.jar
+   dest: "{{ provision_files_path }}/downloaded/mysql-connector-java-5.1.40.jar"
+   checksum: md5:ee039ffdcd65dec90eb8fd783748e016
+   mode: 0444
