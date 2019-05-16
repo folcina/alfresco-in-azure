@@ -1,8 +1,7 @@
 # Alfresco 6.1 in Azure (deployment based in VMs)
 
 ![Alt text](docs/Banner.png?raw=true "Banner")
-* TOC
-{:toc}
+
 ## Project Objective
 
 This project delivers a deployment of ACS (Alfresco Content Services) Enterprise 6.1 on Azure using VMs. The deployment consists of two mayor steps:
