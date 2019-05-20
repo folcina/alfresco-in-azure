@@ -26,11 +26,12 @@ The following software is required to create and deploy resources in Azure:
 
 (Mac Os X versions)
 
-- Packer  1.4.0 - used to automate the creation of Azure Images.
-- Terraform 0.11.13-  used to create and update infrastructure resources.
-- Ansible 2.7.6 - Ansible is an IT automation tool used to deploy and configure systems.
+- Packer  1.4.0 - used to automate the creation of Azure Images. https://www.packer.io/downloads.html
+- Terraform 0.11.13 - used to create and update infrastructure resources. https://www.terraform.io/downloads.html
+- Terraform ansible provisioner 2.1.2 - used to provision the VMs created by Terraform using ansible. https://github.com/radekg/terraform-provisioner-ansible/releases/tag/v2.1.2
 - OpenSSL 1.0.2f - used to decrypt credentials stored in a file.
-- Azure-cli 2.0.55 - used to create and check resources in Azure.
+- Azure-cli 2.0.55 - used to create and check resources in Azure. https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
+- Jq 1.5-1 - commandline JSON processor
 
 Make sure these tools have been installed on the computer you are using to build and deploy ACS Enterprise 6.1.
 
@@ -47,30 +48,46 @@ Instructions about how to store the credentials and run the project are describe
 
 ### 1. Authenticating to Azure
 
-Azure-cli, Packer and Terraform need to authenticate to Azure in order to create resources. Since we are creating a large number of infrastructure resources, the user we authenticate with to Azure, needs to have administrator access.
+Packer and Terraform need a user with contributor rights in order to create resources in Azure. To create a user in Azure with contributor role and obtain its credentials, follow these steps:
 
-In order to authenticate in Azure we need the following information:
+1. Login into Azure with az cli and copy the (subscription) id:
 
-- Subscription ID
-- Tenant ID
-- Client ID
-- Client Secret
+```
+$ az login
+...
 
+"id": "00000-00000-00000-0000-00000000",
+```
+2. Then create a service principal using the subscription id copied from step 1:
 
-The following links provide information to get the above values:
+```
+$ az ad sp create-for-rbac -n "alfresco-azure" --role contributor --scopes /subscriptions/00000-00000-00000-0000-00000000
+Changing "alfresco-azure" to a valid URI of "http://alfresco-azure", which is the required format used for service principal names
+{
+  "appId": "11111111-11111-11111-1111-1111111111",
+  "displayName": "alfresco-azure",
+  "name": "http://alfresco-azure",
+  "password": "222222-2222-2222-2222-222222222222",
+  "tenant": "33333333-3333-3333-3333-33333333"
+}
 
-- https://docs.bitnami.com/azure/faq/administration/find-subscription-id/
-- https://docs.microsoft.com/en-gb/azure/active-directory/develop/howto-create-service-principal-portal#get-application-id-and-authentication-key
+```
+3. With the information provided in steps 2 and 3 we're able to gather the following credentials:
 
-Once you gathered all the credentials you should store them encrypted in a file so the values can be accessed by the *run-azure.sh* script:
+ - Subscription ID -> 00000-00000-00000-0000-00000000
+ - Tenant ID -> 33333333-3333-3333-3333-33333333
+ - Client ID -> 11111111-11111-11111-1111-1111111111
+ - Client Secret -> 222222-2222-2222-2222-222222222222
+
+4. Once you gathered all the credentials store them encrypted in a file so the values can be accessed by the *run-azure.sh* script. In order to do so, execute this commands:
 
 ```
 $ cat > ~/.az <<EOF
 {
-"client_id": "XXXXXX",
-"client_secret": "XXXXXXXX",
-"subscription_id": "XXXXXX",
-"tenant_id": "XXXXXXXX"
+"client_id": "11111111-11111-11111-1111-1111111111",
+"client_secret": "222222-2222-2222-2222-222222222222",
+"subscription_id": "00000-00000-00000-0000-00000000",
+"tenant_id": "33333333-3333-3333-3333-33333333"
 }
 EOF
 $ openssl enc -aes-256-cbc -in ~/.az -out ~/.az.dat
@@ -78,6 +95,11 @@ $ openssl enc -aes-256-cbc -in ~/.az -out ~/.az.dat
 $ chmod 400 ~/.az.dat
 $ rm ~/.az
 ```
+
+The following links provide information about the above values:
+
+- https://www.packer.io/docs/builders/azure-setup.html#create-a-service-principal
+- https://www.packer.io/docs/builders/azure.html
 
 ### 2. Authenticating to Nexus
 
@@ -119,8 +141,20 @@ az account list-locations
 Make sure you have execution permission in the script and then execute it:
 ```
 $ ./run-azure.sh
+Checking Packer version (>=1.4.0)..... OK
+Checking Terraform version (>=0.11.13)..... OK
+Checking Terraform Ansible Provider (=2.1.2)..... OK
+Checking az cli version (>=2.0.55)..... OK
+Checking OpenSSL version (>=1.0.2f)..... OK
+Checking if az subscription is enabled.....OK
+
+#####################################
+Generating ssh keys
+#####################################
+Passphrase stored in ./ssh-keys/passphrase
+
 ~~~~~~~~~~~~~~~~~~~~~
-M A I N - M E N U
+ M A I N - M E N U
 ~~~~~~~~~~~~~~~~~~~~~
 
 1. Run the entire project (create Azure Images, build infrastructure and deploy Alfresco Enterprise 6.1)
@@ -246,6 +280,12 @@ IPs:
 ----
 Application gateway IP: 52.XX.XX.250
 Bastion ip (ssh): 51.XX.XX.81
+
+SSH:
+----
+(See list of ports to connect via ssh to any VM in https://github.com/folcina/alfresco-in-azure)
+
+ssh -i ./ssh-keys/id_rsa azureuser@52.XX.XX.81 -p [PORT]
 ```
 
 Through the bastion node it's possible to connect to the VMs inside the private network. As follows there's a table containing all the endpoints reachable from the bastion IP:

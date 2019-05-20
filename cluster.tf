@@ -683,7 +683,7 @@ resource "azurerm_virtual_machine" "bastionvm" {
         disable_password_authentication = true
         ssh_keys {
             path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "${file("~/.ssh/id_rsa.pub")}"
+            key_data = "${file("${var.SSH_PUBLIC_KEY_FILE}")}"
         }
     }
 
@@ -725,7 +725,7 @@ resource "azurerm_virtual_machine" "bastionvm" {
 
     connection {
         user = "azureuser"
-        private_key = "${file("~/.ssh/id_rsa")}"
+        private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
     }
 }
 
@@ -795,7 +795,7 @@ resource "azurerm_virtual_machine" "activemq_vm" {
         disable_password_authentication = true
         ssh_keys {
             path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "${file("~/.ssh/id_rsa.pub")}"
+            key_data = "${file("${var.SSH_PUBLIC_KEY_FILE}")}"
         }
     }
 
@@ -810,10 +810,10 @@ resource "azurerm_virtual_machine" "activemq_vm" {
 
     connection {
         user = "azureuser"
-        private_key = "${file("~/.ssh/id_rsa")}"
+        private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
         bastion_host = "${data.azurerm_public_ip.bastion_public_ip.ip_address}"
         bastion_user = "azureuser"
-        bastion_private_key = "${file("~/.ssh/id_rsa")}"
+        bastion_private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
     }
 
     provisioner "ansible" {
@@ -826,6 +826,98 @@ resource "azurerm_virtual_machine" "activemq_vm" {
         }
         extra_vars = {
               activemq_node_peer = "activemq-${(count.index + 1) % 2}-vm"
+        }
+        hosts = ["localhost"]
+        become = "true"
+     }
+     remote {
+       skip_install = "true"
+     }
+   }
+}
+
+#### DB SERVER #####
+
+# Create network interface - db
+resource "azurerm_network_interface" "dbnic" {
+    name                      = "dbNIC"
+    location                  = "${var.LOCATION}"
+    resource_group_name       = "${azurerm_resource_group.deployment_rg.name}"
+    network_security_group_id = "${azurerm_network_security_group.myterraformnsg.id}"
+
+    ip_configuration {
+        name                          = "NicConfDB"
+        subnet_id                     = "${azurerm_subnet.backend_subnet.id}"
+        private_ip_address_allocation = "Static"
+        private_ip_address = "${var.db_private_ip}"
+    }
+
+    tags {
+        environment = "Alfresco 6.1 Demo"
+    }
+}
+
+# Create virtual machine - db
+resource "azurerm_virtual_machine" "dbvm" {
+    name                  = "db-vm"
+    location              = "${var.LOCATION}"
+    resource_group_name   = "${azurerm_resource_group.deployment_rg.name}"
+    network_interface_ids = ["${azurerm_network_interface.dbnic.id}"]
+    vm_size               = "Standard_B2s"
+
+    depends_on = [
+                 "azurerm_virtual_machine.bastionvm",
+                 "azurerm_public_ip.bastion_public_ip"
+                ]
+
+    storage_os_disk {
+        name              = "DB_Disk"
+        caching           = "ReadWrite"
+        create_option     = "FromImage"
+        managed_disk_type = "Standard_LRS"
+    }
+
+    storage_image_reference {
+    	id = "/subscriptions/${var.SUBSCRIPTION_ID}/resourceGroups/${var.RESOURCE_GROUP_IMAGES}/providers/Microsoft.Compute/images/DBImage"
+    }
+
+    os_profile {
+        computer_name  = "db-vm"
+        admin_username = "azureuser"
+    }
+
+    os_profile_linux_config {
+        disable_password_authentication = true
+        ssh_keys {
+            path     = "/home/azureuser/.ssh/authorized_keys"
+            key_data = "${file("${var.SSH_PUBLIC_KEY_FILE}")}"
+        }
+    }
+
+    boot_diagnostics {
+        enabled = "true"
+        storage_uri = "${azurerm_storage_account.mystorageaccount.primary_blob_endpoint}"
+    }
+
+    tags {
+        environment = "Alfresco 6.1 Demo"
+    }
+
+    connection {
+        user = "azureuser"
+        private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
+        bastion_host = "${data.azurerm_public_ip.bastion_public_ip.ip_address}"
+        bastion_user = "azureuser"
+        bastion_private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
+    }
+
+    provisioner "ansible" {
+      plays {
+        playbook = {
+           file_path = "./ansible-configure-vm/db-vm.yaml"
+           roles_path = [
+             "./ansible-configure-vm/roles"
+           ]
         }
         hosts = ["localhost"]
         become = "true"
@@ -905,7 +997,7 @@ resource "azurerm_virtual_machine" "frontend_vm" {
         disable_password_authentication = true
         ssh_keys {
             path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "${file("~/.ssh/id_rsa.pub")}"
+            key_data = "${file("${var.SSH_PUBLIC_KEY_FILE}")}"
         }
     }
 
@@ -920,10 +1012,10 @@ resource "azurerm_virtual_machine" "frontend_vm" {
 
     connection {
         user = "azureuser"
-        private_key = "${file("~/.ssh/id_rsa")}"
+        private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
         bastion_host = "${data.azurerm_public_ip.bastion_public_ip.ip_address}"
         bastion_user = "azureuser"
-        bastion_private_key = "${file("~/.ssh/id_rsa")}"
+        bastion_private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
     }
 
     provisioner "remote-exec" {
@@ -968,98 +1060,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "frontend_
              "azurerm_network_interface.frontend_nic",
              "azurerm_lb_backend_address_pool.loadbalancer_internal_repository_backend"
            ]
-}
-
-#### DB SERVER #####
-
-# Create network interface - db
-resource "azurerm_network_interface" "dbnic" {
-    name                      = "dbNIC"
-    location                  = "${var.LOCATION}"
-    resource_group_name       = "${azurerm_resource_group.deployment_rg.name}"
-    network_security_group_id = "${azurerm_network_security_group.myterraformnsg.id}"
-
-    ip_configuration {
-        name                          = "NicConfDB"
-        subnet_id                     = "${azurerm_subnet.backend_subnet.id}"
-        private_ip_address_allocation = "Static"
-        private_ip_address = "${var.db_private_ip}"
-    }
-
-    tags {
-        environment = "Alfresco 6.1 Demo"
-    }
-}
-
-# Create virtual machine - db
-resource "azurerm_virtual_machine" "dbvm" {
-    name                  = "db-vm"
-    location              = "${var.LOCATION}"
-    resource_group_name   = "${azurerm_resource_group.deployment_rg.name}"
-    network_interface_ids = ["${azurerm_network_interface.dbnic.id}"]
-    vm_size               = "Standard_B2s"
-
-    depends_on = [
-                 "azurerm_virtual_machine.bastionvm",
-                 "azurerm_public_ip.bastion_public_ip"
-                ]
-
-    storage_os_disk {
-        name              = "DB_Disk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Standard_LRS"
-    }
-
-    storage_image_reference {
-    	id = "/subscriptions/${var.SUBSCRIPTION_ID}/resourceGroups/${var.RESOURCE_GROUP_IMAGES}/providers/Microsoft.Compute/images/DBImage"
-    }
-
-    os_profile {
-        computer_name  = "db-vm"
-        admin_username = "azureuser"
-    }
-
-    os_profile_linux_config {
-        disable_password_authentication = true
-        ssh_keys {
-            path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "${file("~/.ssh/id_rsa.pub")}"
-        }
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.mystorageaccount.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "Alfresco 6.1 Demo"
-    }
-
-    connection {
-        user = "azureuser"
-        private_key = "${file("~/.ssh/id_rsa")}"
-        bastion_host = "${data.azurerm_public_ip.bastion_public_ip.ip_address}"
-        bastion_user = "azureuser"
-        bastion_private_key = "${file("~/.ssh/id_rsa")}"
-    }
-
-    provisioner "ansible" {
-      plays {
-        playbook = {
-           file_path = "./ansible-configure-vm/db-vm.yaml"
-           roles_path = [
-             "./ansible-configure-vm/roles"
-           ]
-        }
-        hosts = ["localhost"]
-        become = "true"
-     }
-     remote {
-       skip_install = "true"
-     }
-   }
 }
 
 ###### INSIGHT ENGINE - NODES #########
@@ -1129,7 +1129,7 @@ resource "azurerm_virtual_machine" "insight_vm" {
         disable_password_authentication = true
         ssh_keys {
             path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "${file("~/.ssh/id_rsa.pub")}"
+            key_data = "${file("${var.SSH_PUBLIC_KEY_FILE}")}"
         }
     }
 
@@ -1144,10 +1144,10 @@ resource "azurerm_virtual_machine" "insight_vm" {
 
     connection {
         user = "azureuser"
-        private_key = "${file("~/.ssh/id_rsa")}"
+        private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
         bastion_host = "${data.azurerm_public_ip.bastion_public_ip.ip_address}"
         bastion_user = "azureuser"
-        bastion_private_key = "${file("~/.ssh/id_rsa")}"
+        bastion_private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
     }
 
     provisioner "ansible" {
@@ -1249,7 +1249,7 @@ resource "azurerm_virtual_machine" "transformation_vm" {
         disable_password_authentication = true
         ssh_keys {
             path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "${file("~/.ssh/id_rsa.pub")}"
+            key_data = "${file("${var.SSH_PUBLIC_KEY_FILE}")}"
         }
     }
 
@@ -1264,10 +1264,10 @@ resource "azurerm_virtual_machine" "transformation_vm" {
 
     connection {
         user = "azureuser"
-        private_key = "${file("~/.ssh/id_rsa")}"
+        private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
         bastion_host = "${data.azurerm_public_ip.bastion_public_ip.ip_address}"
         bastion_user = "azureuser"
-        bastion_private_key = "${file("~/.ssh/id_rsa")}"
+        bastion_private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
     }
 
     provisioner "remote-exec" {

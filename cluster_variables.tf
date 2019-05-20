@@ -8,6 +8,9 @@ variable "LOCATION" {}
 variable "RESOURCE_GROUP_IMAGES" {}
 variable "RESOURCE_GROUP_DEPLOYMENT" {}
 
+variable "SSH_PUBLIC_KEY_FILE" {}
+variable "SSH_PRIVATE_KEY_FILE" {}
+
 variable "azure_cloudapp_dns" {
   type = "string"
   default = "cloudapp.azure.com"
