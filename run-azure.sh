@@ -149,14 +149,7 @@ function generate_ssh_keys(){
    echo "Generating ssh keys"
    echo "#####################################"
    
-   #PASSPHRASE=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-
-   #ssh-keygen -t rsa -b 4096 -P "$PASSPHRASE" -f $SSH_PRIVATE_KEY_FILE 1> /dev/null 2>/dev/null
    ssh-keygen -t rsa -b 4096 -P "" -f $SSH_PRIVATE_KEY_FILE 1> /dev/null 2>/dev/null
-
-   #echo $PASSPHRASE > $SSH_KEYS_FOLDER/passphrase
-   #chmod 400 $SSH_KEYS_FOLDER/passphrase
-   #echo "Passphrase stored in $SSH_KEYS_FOLDER/passphrase"
 }
 
 function nexus_credentials(){
