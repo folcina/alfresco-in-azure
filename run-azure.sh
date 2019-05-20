@@ -8,8 +8,8 @@ begin=$(date +"%s")
 NEXUS_FILE="$HOME/.nexus.dat"
 AZURE_FILE="$HOME/.az.dat"
 DOMAIN_NAME_LABEL="alfresco61-demo"
-RESOURCE_GROUP_NAME_IMG="Alfresco_6.1_Demo_images_2"
-RESOURCE_GROUP_NAME_DEPLOY="Alfresco_deployment_2"
+RESOURCE_GROUP_NAME_IMG="Alfresco_6.1_Demo_images"
+RESOURCE_GROUP_NAME_DEPLOY="Alfresco_deployment"
 LOCATION="uksouth"
 
 #OpenSSL
