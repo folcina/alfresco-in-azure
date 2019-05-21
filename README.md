@@ -287,6 +287,11 @@ SSH:
 
 ssh -i ./ssh-keys/id_rsa azureuser@52.XX.XX.81 -p [PORT]
 ```
+The administrator credentials for Alfresco are:
+```
+login: admin
+password: alfresco.123
+```
 
 Through the bastion node it's possible to connect to the VMs inside the private network. As follows there's a table containing all the endpoints reachable from the bastion IP:
 
