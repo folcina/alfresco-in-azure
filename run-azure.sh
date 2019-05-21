@@ -113,7 +113,7 @@ function check_software_versions(){
 
    #OpenSSL >=1.0.2.f
    echo -n "Checking OpenSSL version (>=1.0.2f)..... "
-   if [ "$($OPENSSL_EXE version |awk '{print $2}' |grep -c -E '1\.[0-9]\.[2-9][f-z]')" -eq "1" ]; then
+   if [ "$($OPENSSL_EXE version |awk '{print $2}' |grep -c -E '1\.([0-9]\.[2-9][f-z]|[1-9]\.[0-9][a-z])')" -eq "1" ]; then
       echo "OK"
    else
       echo "OpenSSL version should be equal or higher than 1.0.2f"
@@ -148,7 +148,7 @@ function generate_ssh_keys(){
    echo "#####################################"
    echo "Generating ssh keys"
    echo "#####################################"
-   
+
    ssh-keygen -t rsa -b 4096 -P "" -f $SSH_PRIVATE_KEY_FILE 1> /dev/null 2>/dev/null
 }
 
