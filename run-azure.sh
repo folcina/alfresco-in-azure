@@ -104,7 +104,7 @@ function check_software_versions(){
 
    # AZ client
    echo -n "Checking az cli version (>=2.0.55)..... "
-   if [ "$($AZ_EXE --version |head -1 |awk '{print $2}'  |grep -i -c -E '[2-9]\.[0-9]\.[5-9][5-9]|[6-9][0-9]')" -eq "1" ]; then
+   if [ "$($AZ_EXE --version 2>/dev/null |head -1 |awk '{print $2}'  |grep -i -c -E '[2-9]\.[0-9]\.[5-9][5-9]|[6-9][0-9]')" -eq "1" ]; then
       echo "OK"
    else
       echo "az cli version should be equal or higher than 2.0.55"

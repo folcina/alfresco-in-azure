@@ -123,17 +123,65 @@
     regexp: "@@ansible_activemq_node1@@"
     replace: "{{ activemq_node1 }}"
 
-- name: Configure alfresco-global.properties (shared-file-store host)
+- name: Configure alfresco-global.properties (jodconverter port)
   replace:
     path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
-    regexp: "@@ansible_shared_file_store_host@@"
-    replace: "{{ shared_file_store_host }}"
+    regexp: "@@ansible_jodconverter_port@@"
+    replace: "{{ libreoffice_port }}"
+
+- name: Configure alfresco-global.properties (jodconverter host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_jodconverter_host@@"
+    replace: "{{ transform_service_host }}"
+
+- name: Configure alfresco-global.properties (pdf_renderer port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_pdf_renderer_port@@"
+    replace: "{{ pdf_renderer_port }}"
+
+- name: Configure alfresco-global.properties (pdf_renderer host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_pdf_renderer_host@@"
+    replace: "{{ transform_service_host }}"
+
+- name: Configure alfresco-global.properties (imagemagick port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_imagemagick_port@@"
+    replace: "{{ imagemagick_port }}"
+
+- name: Configure alfresco-global.properties (imagemagick host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_imagemagick_host@@"
+    replace: "{{ transform_service_host }}"
+
+- name: Configure alfresco-global.properties (tika port)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_tika_port@@"
+    replace: "{{ tika_port }}"
+
+- name: Configure alfresco-global.properties (tika host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_tika_host@@"
+    replace: "{{ transform_service_host }}"
 
 - name: Configure alfresco-global.properties (shared-file-store port)
   replace:
     path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
     regexp: "@@ansible_shared_file_store_port@@"
     replace: "{{ shared_file_store_port }}"
+
+- name: Configure alfresco-global.properties (shared-file-store host)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_shared_file_store_host@@"
+    replace: "{{ transform_service_host }}"
 
 ## Mount points
 - name: Create contentstores folder

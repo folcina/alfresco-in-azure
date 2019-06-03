@@ -59,7 +59,7 @@ variable "internal_repository_lb_private_ip" {
   default = "10.0.1.14"
 }
 
-variable "shared_file_store_lb_private_ip" {
+variable "transform_service_lb_private_ip" {
   type = "string"
   default = "10.0.1.15"
 }

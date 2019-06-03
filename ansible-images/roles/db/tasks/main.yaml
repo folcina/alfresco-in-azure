@@ -23,3 +23,10 @@
     state: present
     insertafter: EOF
     line: 'validate_password_policy=LOW'
+
+- name: Increase max connections
+  lineinfile:
+    path: /etc/my.cnf
+    state: present
+    insertafter: EOF
+    line: 'max_connections=300'

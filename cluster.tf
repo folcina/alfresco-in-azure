@@ -1,5 +1,5 @@
 provider "azurerm" {
-   version = "~> 1.24.0"
+   version = "~> 1.28.0"
    client_id = "${var.CLIENT_ID}",
    client_secret = "${var.CLIENT_SECRET}",
    subscription_id = "${var.SUBSCRIPTION_ID}",
@@ -550,30 +550,70 @@ resource "azurerm_lb_rule" "InternalRepositoryEndPointListener" {
   load_distribution              = "SourceIPProtocol"
 }
 
-####### INTERNAL LOAD BALANCER (for Shared File Store) #######
+####### INTERNAL LOAD BALANCER (for Transform Services) #######
 
-resource "azurerm_lb" "shared-file-store-loadbalancer" {
-  name                = "shared-file-store-loadbalancer"
+resource "azurerm_lb" "transform-service-loadbalancer" {
+  name                = "transform-service-loadbalancer"
   resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
   location            = "${var.LOCATION}"
   sku                 = "Basic"
   frontend_ip_configuration {
-    name                 = "SharedFileStoreLbConf"
+    name                 = "TransformServiceLbConf"
     subnet_id                     = "${azurerm_subnet.backend_subnet.id}"
     private_ip_address_allocation = "Static"
-    private_ip_address  = "${var.shared_file_store_lb_private_ip}"
+    private_ip_address  = "${var.transform_service_lb_private_ip}"
   }
 }
 
-resource "azurerm_lb_backend_address_pool" "loadbalancer_shared_file_store_backend" {
-  name                = "loadbalancer_shared_file_store_backend"
+resource "azurerm_lb_backend_address_pool" "loadbalancer_transform_service_backend" {
+  name                = "loadbalancer_transform_service_backend"
   resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
-  loadbalancer_id     = "${azurerm_lb.shared-file-store-loadbalancer.id}"
+  loadbalancer_id     = "${azurerm_lb.transform-service-loadbalancer.id}"
+}
+
+resource "azurerm_lb_probe" "loadbalancer_libreoffice_probe" {
+  resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id     = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                = "LibreofficeEndPointProbe"
+  protocol            = "tcp"
+  port                = 8090
+  interval_in_seconds = 5
+  number_of_probes    = 2
+}
+
+resource "azurerm_lb_probe" "loadbalancer_pdf_renderer_probe" {
+  resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id     = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                = "PdfRendererEndPointProbe"
+  protocol            = "tcp"
+  port                = 8091
+  interval_in_seconds = 5
+  number_of_probes    = 2
+}
+
+resource "azurerm_lb_probe" "loadbalancer_imagemagick_probe" {
+  resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id     = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                = "ImagemagickEndPointProbe"
+  protocol            = "tcp"
+  port                = 8092
+  interval_in_seconds = 5
+  number_of_probes    = 2
+}
+
+resource "azurerm_lb_probe" "loadbalancer_tika_probe" {
+  resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id     = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                = "TikaEndPointProbe"
+  protocol            = "tcp"
+  port                = 8093
+  interval_in_seconds = 5
+  number_of_probes    = 2
 }
 
 resource "azurerm_lb_probe" "loadbalancer_shared_file_store_probe" {
   resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
-  loadbalancer_id     = "${azurerm_lb.shared-file-store-loadbalancer.id}"
+  loadbalancer_id     = "${azurerm_lb.transform-service-loadbalancer.id}"
   name                = "InternalRepoEndPointProbe"
   protocol            = "tcp"
   port                = 8094
@@ -581,15 +621,67 @@ resource "azurerm_lb_probe" "loadbalancer_shared_file_store_probe" {
   number_of_probes    = 2
 }
 
+resource "azurerm_lb_rule" "LibreofficeEndPointListener" {
+  resource_group_name            = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id                = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                           = "LibreofficeEndPointListener"
+  protocol                       = "Tcp"
+  frontend_port                  = 8090
+  backend_port                   = 8090
+  frontend_ip_configuration_name = "TransformServiceLbConf"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend.id}"
+  probe_id                       = "${azurerm_lb_probe.loadbalancer_libreoffice_probe.id}"
+  load_distribution              = "SourceIPProtocol"
+}
+
+resource "azurerm_lb_rule" "PDFRendererEndPointListener" {
+  resource_group_name            = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id                = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                           = "PDFRendererEndPointListener"
+  protocol                       = "Tcp"
+  frontend_port                  = 8091
+  backend_port                   = 8091
+  frontend_ip_configuration_name = "TransformServiceLbConf"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend.id}"
+  probe_id                       = "${azurerm_lb_probe.loadbalancer_pdf_renderer_probe.id}"
+  load_distribution              = "SourceIPProtocol"
+}
+
+resource "azurerm_lb_rule" "ImageMagickEndPointListener" {
+  resource_group_name            = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id                = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                           = "ImageMagickEndPointListener"
+  protocol                       = "Tcp"
+  frontend_port                  = 8092
+  backend_port                   = 8092
+  frontend_ip_configuration_name = "TransformServiceLbConf"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend.id}"
+  probe_id                       = "${azurerm_lb_probe.loadbalancer_imagemagick_probe.id}"
+  load_distribution              = "SourceIPProtocol"
+}
+
+resource "azurerm_lb_rule" "TikaEndPointListener" {
+  resource_group_name            = "${azurerm_resource_group.deployment_rg.name}"
+  loadbalancer_id                = "${azurerm_lb.transform-service-loadbalancer.id}"
+  name                           = "TikaEndPointListener"
+  protocol                       = "Tcp"
+  frontend_port                  = 8093
+  backend_port                   = 8093
+  frontend_ip_configuration_name = "TransformServiceLbConf"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend.id}"
+  probe_id                       = "${azurerm_lb_probe.loadbalancer_tika_probe.id}"
+  load_distribution              = "SourceIPProtocol"
+}
+
 resource "azurerm_lb_rule" "SharedFileStoreEndPointListener" {
   resource_group_name            = "${azurerm_resource_group.deployment_rg.name}"
-  loadbalancer_id                = "${azurerm_lb.shared-file-store-loadbalancer.id}"
+  loadbalancer_id                = "${azurerm_lb.transform-service-loadbalancer.id}"
   name                           = "SharedFileStoreEndPointListener"
   protocol                       = "Tcp"
   frontend_port                  = 8094
   backend_port                   = 8094
-  frontend_ip_configuration_name = "SharedFileStoreLbConf"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.loadbalancer_shared_file_store_backend.id}"
+  frontend_ip_configuration_name = "TransformServiceLbConf"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend.id}"
   probe_id                       = "${azurerm_lb_probe.loadbalancer_shared_file_store_probe.id}"
   load_distribution              = "SourceIPProtocol"
 }
@@ -1037,7 +1129,7 @@ resource "azurerm_virtual_machine" "frontend_vm" {
         }
         extra_vars = {
               solr_host = "${var.search_services_lb_private_ip}",
-              shared_file_store_host = "${var.shared_file_store_lb_private_ip}",
+              transform_service_host = "${var.transform_service_lb_private_ip}",
               alfresco_host = "${local.alfresco_fqdn}",
               share_host = "${local.alfresco_fqdn}"
         }
@@ -1299,12 +1391,12 @@ resource "azurerm_virtual_machine" "transformation_vm" {
 resource "azurerm_network_interface_backend_address_pool_association" "transformation_lb_association" {
   network_interface_id    = "${element(azurerm_network_interface.transformation_nic.*.id,count.index)}"
   ip_configuration_name   = "transformation_ipconfig"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.loadbalancer_shared_file_store_backend.id}"
+  backend_address_pool_id = "${azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend.id}"
   count=2
 
   depends_on = [
              "azurerm_network_interface.transformation_nic",
-             "azurerm_lb_backend_address_pool.loadbalancer_shared_file_store_backend"
+             "azurerm_lb_backend_address_pool.loadbalancer_transform_service_backend"
            ]
 }
 

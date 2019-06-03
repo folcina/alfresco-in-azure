@@ -48,7 +48,50 @@ Instructions about how to store the credentials and run the project are describe
 
 ### 1. Authenticating to Azure
 
-Packer and Terraform need a user with contributor rights in order to create resources in Azure. To create a user in Azure with contributor role and obtain its credentials, follow these steps:
+There are two possible ways to authenticate: manually through the azure portal when prompted to do so or automatically via service principal credentials.
+
+For the former option follow these steps:
+
+1. Login into Azure with az cli and copy the (subscription) id:
+
+```
+$ az login
+...
+
+"id": "00000-00000-00000-0000-00000000",
+```
+
+
+2. Once you get the subscription id you need to store it encrypted in a file as the *run-azure.sh* script expects the id to be encrypted. The script also expects other credentials for the service principal method but those can be set as null ("") in this authentication approach. In order to do so, execute this commands:
+
+```
+$ cat > ~/.az <<EOF
+{
+"client_id": "",
+"client_secret": "",
+"subscription_id": "00000-00000-00000-0000-00000000",
+"tenant_id": ""
+}
+EOF
+$ openssl enc -aes-256-cbc -in ~/.az -out ~/.az.dat
+
+$ chmod 400 ~/.az.dat
+$ rm ~/.az
+```
+3. When launching the *run-azure.sh* script packer or terraform will ask to authenticate through a microsoft url like in the below example. Just follow the instructions:
+
+```
+==> azure-arm: Microsoft Azure: To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code DMEQGX2YG to authenticate.
+==> azure-arm: Obtained service principal token.
+==> azure-arm: Getting token for Vault resource
+==> azure-arm: Loading auth token from file: /home/vagrant/.azure/packer/oauth-a99a627e-e9ce-48ba-8fdb-6c64a4dbcf34vault.json
+==> azure-arm: Initiating device flow: /home/vagrant/.azure/packer/oauth-a99a627e-e9ce-48ba-8fdb-6c64a4dbcf34vault.json
+==> azure-arm: Microsoft Azure: To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code XXXXXXXXXX to authenticate.
+==> azure-arm: Obtained service principal token.
+    azure-arm: Creating Azure Resource Manager (ARM) client ...
+```
+
+For the service principal option follow these steps:
 
 1. Login into Azure with az cli and copy the (subscription) id:
 
