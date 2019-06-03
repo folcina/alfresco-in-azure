@@ -81,7 +81,7 @@ $ rm ~/.az
 3. When launching the *run-azure.sh* script packer or terraform will ask to authenticate through a microsoft url like in the below example. Just follow the instructions:
 
 ```
-==> azure-arm: Microsoft Azure: To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code DMEQGX2YG to authenticate.
+==> azure-arm: Microsoft Azure: To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code XXXXXXXXXX to authenticate.
 ==> azure-arm: Obtained service principal token.
 ==> azure-arm: Getting token for Vault resource
 ==> azure-arm: Loading auth token from file: /home/vagrant/.azure/packer/oauth-a99a627e-e9ce-48ba-8fdb-6c64a4dbcf34vault.json
