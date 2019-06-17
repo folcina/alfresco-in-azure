@@ -24,7 +24,8 @@ alfresco_db_name: alfresco61
 alfresco_db_host: db-vm
 
 alfresco_root_dir: /opt/alfresco
-alfresco_contentstores_dir: /alf-contentstores
+alfresco_contentstore_dir: contentstore
+alfresco_contentstore_deleted_dir: contentstore.deleted
 
 alfresco_java_opts: "-Xms512M -Xmx2048M -XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:ReservedCodeCacheSize=128m -Dcom.sun.management.jmxremote"
 

@@ -99,6 +99,19 @@
   become: yes
   when: aos_unzipped.failed == false and aos_amp_applied.stdout == '0'
 
+- name: Check if Azure Connector amp is already applied
+  # Cat command used at the end to avoid returning an error when grep doesn't find occurrences
+  shell: "{{ alfresco_root_dir }}/java/bin/java -jar {{ alfresco_root_dir }}/bin/alfresco-mmt.jar list {{ alfresco_root_dir }}/tomcat/webapps/alfresco.war | /usr/bin/grep -c \"Alfresco Content Connector for Azure\" | cat"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  register: azure_connector_amp_applied
+
+- name: Apply Azure Connector amp
+  command: "{{ alfresco_root_dir }}/java/bin/java -jar {{ alfresco_root_dir }}/bin/alfresco-mmt.jar install {{ provision_files_path }}/downloaded/alfresco-azure-connector.amp {{ alfresco_root_dir }}/tomcat/webapps/alfresco.war"
+  become_user: "{{ alfresco_user }}"
+  become: yes
+  when: azure_connector_amp_applied.stdout == '0'
+
 - name: Copy _vti_bin.war to Tomcat webapps folder
   copy:
     src: "{{ provision_files_path }}/_vti_bin.war"

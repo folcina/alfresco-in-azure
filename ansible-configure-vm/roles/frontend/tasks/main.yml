@@ -51,11 +51,17 @@
     replace: "{{ tomcat_port }}"
 
 ## ALFRESCO CONFIGURATION
-- name: Configure alfresco-global.properties (alfresco_contentstores_dir)
+- name: Configure alfresco-global.properties (alfresco_contentstore_dir)
   replace:
     path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
-    regexp: "@@ansible_alfresco_contentstores_dir@@"
-    replace: "{{ alfresco_contentstores_dir }}"
+    regexp: "@@ansible_alfresco_contentstore_dir@@"
+    replace: "{{ alfresco_contentstore_dir }}"
+
+- name: Configure alfresco-global.properties (alfresco_contentstore_deleted_dir)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_alfresco_contentstore_deleted_dir@@"
+    replace: "{{ alfresco_contentstore_deleted_dir }}"
 
 - name: Configure alfresco-global.properties (alfresco_host)
   replace:
@@ -183,50 +189,23 @@
     regexp: "@@ansible_shared_file_store_host@@"
     replace: "{{ transform_service_host }}"
 
-## Mount points
-- name: Create contentstores folder
-  file:
-     path: "{{ alfresco_contentstores_dir }}"
-     state: directory
-     mode: 0750
-     owner: "{{ alfresco_user }}"
-     group: "{{ alfresco_group }}"
+- name: Configure alfresco-global.properties (azure.accessKey)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_azure_accessKey@@"
+    replace: "{{ azure_storage_account_name  }}"
 
-- name: Get account name
-  shell: cat /etc/smb-credentials |grep "username"|awk -F'=' '{print $2}'
-  register: smb_account_name
+- name: Configure alfresco-global.properties (azure.secretKey)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_azure_secretKey@@"
+    replace: "{{ azure_storage_account_primary_key }}"
 
-- name: Get alfresco user uid
-  shell: "id -u {{ alfresco_user }}"
-  register: alfresco_uid
-
-- name: Get alfresco group gid
-  shell: "id -g {{ alfresco_group }}"
-  register: alfresco_gid
-
-- name: Mount content store (Azure File Storage)
-  mount:
-    path: "{{ alfresco_contentstores_dir }}"
-    src: "//{{ smb_account_name.stdout }}.file.core.windows.net/alf-contentstores"
-    fstype: cifs
-    opts: nofail,vers=3.0,forceuid,uid={{ alfresco_uid.stdout }},gid={{ alfresco_gid.stdout }},credentials=/etc/smb-credentials,dir_mode=0770,file_mode=0770,serverino
-    state: mounted
-
-- name: Create contentstore folder
-  file:
-     path: "{{ alfresco_contentstores_dir }}/contentstore"
-     state: directory
-     mode: 0750
-     owner: "{{ alfresco_user }}"
-     group: "{{ alfresco_group }}"
-
-- name: Create contentstore.deleted folder
-  file:
-     path: "{{ alfresco_contentstores_dir }}/contentstore.deleted"
-     state: directory
-     mode: 0750
-     owner: "{{ alfresco_user }}"
-     group: "{{ alfresco_group }}"
+- name: Configure alfresco-global.properties (azure.containerName)
+  replace:
+    path: "{{ alfresco_root_dir }}/tomcat/shared/classes/alfresco-global.properties"
+    regexp: "@@ansible_azure_containerName@@"
+    replace: "{{ azure_container_name }}"
 
 # Repository port is 8080 by default but code below is just in case a custom port
 # is needed

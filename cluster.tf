@@ -686,7 +686,7 @@ resource "azurerm_lb_rule" "SharedFileStoreEndPointListener" {
   load_distribution              = "SourceIPProtocol"
 }
 
-####### AZURE STORAGE SHARE (AZURE FILES) #########
+####### AZURE BLOB STORAGE (contentstore) #########
 resource "azurerm_storage_account" "contentstore" {
   name                     = "content${random_id.randomId.hex}"
   resource_group_name      = "${azurerm_resource_group.deployment_rg.name}"
@@ -695,19 +695,28 @@ resource "azurerm_storage_account" "contentstore" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_storage_share" "contentstores" {
+resource "azurerm_storage_container" "contentstore-container" {
+  name                  = "contentstore-container"
+  resource_group_name   = "${azurerm_resource_group.deployment_rg.name}"
+  storage_account_name  = "${azurerm_storage_account.contentstore.name}"
+  container_access_type = "private"
+}
+
+
+resource "azurerm_storage_blob" "contentstores" {
   name = "alf-contentstores"
 
   resource_group_name  = "${azurerm_resource_group.deployment_rg.name}"
   storage_account_name = "${azurerm_storage_account.contentstore.name}"
+  storage_container_name = "${azurerm_storage_container.contentstore-container.name}"
 
-  quota = 50
+  type = "block"
 }
 
 data "azurerm_storage_account" "contentstores-data" {
   name                = "content${random_id.randomId.hex}"
   resource_group_name = "${azurerm_resource_group.deployment_rg.name}"
-  depends_on = [ "azurerm_storage_share.contentstores" ]
+  depends_on = [ "azurerm_storage_blob.contentstores" ]
 }
 
 resource "azurerm_storage_share" "shared-file-store" {
@@ -718,6 +727,8 @@ resource "azurerm_storage_share" "shared-file-store" {
 
   quota = 5
 }
+
+
 
 ########### VIRTUAL MACHINE DEFINITIONS ##########
 
@@ -1110,15 +1121,6 @@ resource "azurerm_virtual_machine" "frontend_vm" {
         bastion_private_key = "${file("${var.SSH_PRIVATE_KEY_FILE}")}"
     }
 
-    provisioner "remote-exec" {
-        inline = [
-          "sudo touch /etc/smb-credentials",
-          "sudo chmod 440 /etc/smb-credentials",
-          "sudo sh -c \"echo \"username=${azurerm_storage_account.contentstore.name}\" > /etc/smb-credentials\"",
-          "sudo sh -c \"echo \"password=${data.azurerm_storage_account.contentstores-data.primary_access_key}\" >> /etc/smb-credentials\""
-        ]
-    }
-
     provisioner "ansible" {
       plays {
         playbook = {
@@ -1131,7 +1133,10 @@ resource "azurerm_virtual_machine" "frontend_vm" {
               solr_host = "${var.search_services_lb_private_ip}",
               transform_service_host = "${var.transform_service_lb_private_ip}",
               alfresco_host = "${local.alfresco_fqdn}",
-              share_host = "${local.alfresco_fqdn}"
+              share_host = "${local.alfresco_fqdn}",
+              azure_storage_account_name = "${azurerm_storage_account.contentstore.name}",
+              azure_storage_account_primary_key = "${data.azurerm_storage_account.contentstores-data.primary_access_key}",
+              azure_container_name = "${azurerm_storage_container.contentstore-container.name}"
         }
         hosts = ["localhost"]
         become = "true"

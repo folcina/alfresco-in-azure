@@ -5,13 +5,6 @@
    checksum: md5:6c2c81fdc2c30655df6350c337f6bb8b
    mode: 0444
 
-- name: Download Apache Activemq 5.15.6
-  get_url:
-   url: https://archive.apache.org/dist/activemq/5.15.6/apache-activemq-5.15.6-bin.tar.gz
-   dest: "{{ provision_files_path }}/downloaded/apache-activemq-5.15.6-bin.tar.gz"
-   checksum: md5:e79acb9dba66ba7b80e3148ce60f5c72
-   mode: 0444
-
 - name: Download Jre 1.8.0.25
   get_url:
    url: https://artifacts.alfresco.com/nexus/content/groups/internal/com/oracle/java/jre/1.8.0_25/jre-1.8.0_25-linux.tgz
@@ -69,6 +62,15 @@
    url: https://artifacts.alfresco.com/nexus/content/groups/internal/org/alfresco/aos-module/alfresco-aos-module-distributionzip/1.2.2/alfresco-aos-module-distributionzip-1.2.2.zip
    dest: "{{ provision_files_path }}/downloaded/alfresco-aos-module-distributionzip-1.2.2.zip"
    checksum: md5:d9a2bbc8a7223bf8f20a0f0068425954
+   mode: 0444
+   url_username: "{{ nexus_user }}"
+   url_password: "{{ nexus_password }}"
+
+- name: Download Alfresco Azure Connector 0.11 (amp)
+  get_url:
+   url: https://artefacts.alfresco.com/nexus/service/local/repositories/enterprise-releases/content/org/alfresco/integrations/alfresco-azure-connector/0.11/alfresco-azure-connector-0.11.amp
+   dest: "{{ provision_files_path }}/downloaded/alfresco-azure-connector.amp"
+   checksum: md5:9b8f48f292d877b373037c66e4949bf0
    mode: 0444
    url_username: "{{ nexus_user }}"
    url_password: "{{ nexus_password }}"
